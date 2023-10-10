@@ -20,6 +20,11 @@ Like the [Whippet](https://en.wikipedia.org/wiki/Whippet), this language has the
 - [ ] self-host compiler
 - [ ] **SOLVE ADVENT OF CODE**
 
+## Requirements
+- macOs (because of `strndup`)
+- clang
+- make
+
 ## Tests
 
 ```bash
