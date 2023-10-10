@@ -1,5 +1,8 @@
 # nino-lang
+[![Run Tests](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml/badge.svg?branch=main)](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml)
+
 **Tiny speedy self-hosted compiled functional programming language**
+
 
 Like the [Whippet](https://en.wikipedia.org/wiki/Whippet), this language has the highest running speed of any [language] of its [size].
 
@@ -12,3 +15,8 @@ Like the [Whippet](https://en.wikipedia.org/wiki/Whippet), this language has the
 - [ ] if, while, for
 - [ ] arrays, strings
 - [ ] **SOLVE ADVENT OF CODE**
+
+## Tests
+```bash
+make test
+```
