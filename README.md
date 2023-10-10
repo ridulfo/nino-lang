@@ -17,6 +17,7 @@ Like the [Whippet](https://en.wikipedia.org/wiki/Whippet), this language has the
 - [ ] i64, f32, f64
 - [ ] if, while, for
 - [ ] arrays, strings
+- [ ] self-host compiler
 - [ ] **SOLVE ADVENT OF CODE**
 
 ## Tests
