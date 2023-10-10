@@ -4,7 +4,7 @@
 
 enum TokenType {
     TOKEN_KEYWORD,
-    TOKE_SEPARATOR,
+    TOKEN_SEPARATOR,
     TOKEN_IDENTIFIER,
     TOKEN_INT,
     TOKEN_OPERATOR,
@@ -14,8 +14,7 @@ extern char** TokenNames;
 
 typedef struct Token {
     enum TokenType type;
-    char* start;
-    size_t length;
+    char* text;
 } Token;
 
 typedef struct TokenList {

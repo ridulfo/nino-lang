@@ -9,8 +9,12 @@ char** TokenNames = (char*[]){"KEYWORD", "SEPARATOR", "IDENTIFIER", "INT",
 
 char** KeywordNames = (char*[]){"let"};
 
+void set_token(Token* token, enum TokenType type, char* start, size_t length) {
+    *token = (Token){type, strndup(start, length)};
+}
+
 void _print_token(Token* token) {
-    printf("Value: %.*s, ", (int)token->length, token->start);
+    printf("Value: %s, ", token->text);
     printf("Type: %s\n", TokenNames[token->type]);
 }
 
@@ -28,10 +32,7 @@ void parse_word(char** input, Token* token) {
         (*input)++;
         length++;
     }
-    token->type = TOKEN_IDENTIFIER;
-    token->start = start;
-    token->length = length;
-    printf("Word: %.*s\n", (int)length, start);
+    set_token(token, TOKEN_IDENTIFIER, start, length);
 
     // check if the word is a keyword
     for (size_t i = 0; i < sizeof(KeywordNames) / sizeof(char*); i++) {
@@ -51,31 +52,31 @@ TokenList* lex(char* input) {
         consume_whitespace(&current);
 
         if (*current == '(' || *current == ')' || *current == ',') {
-            tokens[tokenCount] = (Token){TOKE_SEPARATOR, current, 1};
+            set_token(&tokens[tokenCount], TOKEN_SEPARATOR, current, 1);
             current++;
 
         } else if (*current == '=') {
             if (*(current + 1) == '>') {
-                tokens[tokenCount] = (Token){TOKEN_OPERATOR, current, 2};
+                set_token(&tokens[tokenCount], TOKEN_OPERATOR, current, 2);
                 current += 2;
             } else {
-                tokens[tokenCount] = (Token){TOKEN_OPERATOR, current, 1};
+                set_token(&tokens[tokenCount], TOKEN_OPERATOR, current, 1);
                 current++;
             }
 
         } else if (*current == '+' || *current == '-' || *current == '*' ||
                    *current == '/') {
-            tokens[tokenCount] = (Token){TOKEN_OPERATOR, current, 1};
+            set_token(&tokens[tokenCount], TOKEN_OPERATOR, current, 1);
             current++;
 
         } else if (*current >= '0' && *current <= '9') {
-            tokens[tokenCount] = (Token){TOKEN_INT, current, 1};
+            set_token(&tokens[tokenCount], TOKEN_INT, current, 1);
             current++;
 
         } else if (*current >= 'a' && *current <= 'z') {
             parse_word(&current, &tokens[tokenCount]);
         } else if (*current == ';') {
-            tokens[tokenCount] = (Token){TOKE_SEPARATOR, current, 1};
+            set_token(&tokens[tokenCount], TOKEN_SEPARATOR, current, 1);
             current++;
 
         } else {
