@@ -3,7 +3,7 @@
     <h1 align="center">nino-lang</h1>
 </div>
 
-[![Run Tests](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml/badge.svg?branch=main)](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml)
+[![Run Tests](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml/badge.svg)](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml)
 
 **Tiny speedy self-hosted compiled functional programming language**
 
