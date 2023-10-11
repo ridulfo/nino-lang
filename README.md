@@ -80,7 +80,6 @@ let ability:str =
 
 ## Requirements
 
-- macOS (because of `strndup`)
 - Clang
 - make
 

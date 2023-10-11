@@ -5,8 +5,8 @@ on:
       - main
     paths:
       - "makefile"
-      - "*.c"
-      - "*.h"
+      - "**/*.c"
+      - "**/*.h"
   workflow_dispatch:
     
       
