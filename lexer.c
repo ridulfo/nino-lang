@@ -9,8 +9,15 @@ char** TokenNames = (char*[]){"KEYWORD", "SEPARATOR", "IDENTIFIER", "INT",
 
 char** KeywordNames = (char*[]){"let"};
 
-void set_token(Token* token, enum TokenType type, char* start, size_t length) {
-    *token = (Token){type, strndup(start, length)};
+Token* create_token(enum TokenType type, char* start, size_t length) {
+    Token* token = malloc(sizeof(Token));
+
+    token->type = type;
+    token->length = length;
+    token->text = malloc(length + 1);
+    strncpy(token->text, start, length);
+
+    return token;
 }
 
 void _print_token(Token* token) {
@@ -25,14 +32,14 @@ void consume_whitespace(char** input) {
     }
 }
 
-void parse_word(char** input, Token* token) {
+Token* parse_word(char** input) {
     size_t length = 0;
     char* start = *input;
     while (**input >= 'a' && **input <= 'z') {
         (*input)++;
         length++;
     }
-    set_token(token, TOKEN_IDENTIFIER, start, length);
+    Token* token = create_token(TOKEN_IDENTIFIER, start, length);
 
     // check if the word is a keyword
     for (size_t i = 0; i < sizeof(KeywordNames) / sizeof(char*); i++) {
@@ -41,6 +48,8 @@ void parse_word(char** input, Token* token) {
             break;
         }
     }
+
+    return token;
 }
 
 TokenList* lex(char* input) {
@@ -52,31 +61,32 @@ TokenList* lex(char* input) {
         consume_whitespace(&current);
 
         if (*current == '(' || *current == ')' || *current == ',') {
-            set_token(&tokens[tokenCount], TOKEN_SEPARATOR, current, 1);
+            tokens[tokenCount] = *create_token(TOKEN_SEPARATOR, current, 1);
+
             current++;
 
         } else if (*current == '=') {
             if (*(current + 1) == '>') {
-                set_token(&tokens[tokenCount], TOKEN_OPERATOR, current, 2);
+                tokens[tokenCount] = *create_token(TOKEN_OPERATOR, current, 2);
                 current += 2;
             } else {
-                set_token(&tokens[tokenCount], TOKEN_OPERATOR, current, 1);
+                tokens[tokenCount] = *create_token(TOKEN_OPERATOR, current, 1);
                 current++;
             }
 
         } else if (*current == '+' || *current == '-' || *current == '*' ||
                    *current == '/') {
-            set_token(&tokens[tokenCount], TOKEN_OPERATOR, current, 1);
+            tokens[tokenCount] = *create_token(TOKEN_OPERATOR, current, 1);
             current++;
 
         } else if (*current >= '0' && *current <= '9') {
-            set_token(&tokens[tokenCount], TOKEN_INT, current, 1);
+            tokens[tokenCount] = *create_token(TOKEN_INT, current, 1);
             current++;
 
         } else if (*current >= 'a' && *current <= 'z') {
-            parse_word(&current, &tokens[tokenCount]);
+            tokens[tokenCount] = *parse_word(&current);
         } else if (*current == ';') {
-            set_token(&tokens[tokenCount], TOKEN_SEPARATOR, current, 1);
+            tokens[tokenCount] = *create_token(TOKEN_SEPARATOR, current, 1);
             current++;
 
         } else {

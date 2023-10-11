@@ -24,6 +24,7 @@ extern char** TokenNames;
 typedef struct Token {
     enum TokenType type;
     char* text;
+    size_t length;
 } Token;
 
 /**
