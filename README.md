@@ -59,7 +59,7 @@ listen(server)
 - [ ] if, while, for
 - [ ] arrays, strings
 - [ ] self-host compiler
-- [ ] **SOLVE ADVENT OF CODE**
+- [ ] [**SOLVE ADVENT OF CODE**](https://time-since.nicolo.io/#/20231201-000000?title=Advent+of+code)
 
 ## Requirements
 
