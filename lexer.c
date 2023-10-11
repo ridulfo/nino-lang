@@ -15,7 +15,9 @@ Token* create_token(enum TokenType type, char* start, size_t length) {
     token->type = type;
     token->length = length;
     token->text = malloc(length + 1);
+    
     strncpy(token->text, start, length);
+    token->text[length] = '\0';
 
     return token;
 }
@@ -43,7 +45,7 @@ Token* parse_word(char** input) {
 
     // check if the word is a keyword
     for (size_t i = 0; i < sizeof(KeywordNames) / sizeof(char*); i++) {
-        if (strncmp(KeywordNames[i], start, length) == 0) {
+        if (strcmp(KeywordNames[i], token->text) == 0) {
             token->type = TOKEN_KEYWORD;
             break;
         }
@@ -55,6 +57,11 @@ Token* parse_word(char** input) {
 TokenList* lex(char* input) {
     printf("%s\n", input);
     Token* tokens = malloc(1000 * sizeof(Token));
+    if (tokens == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+
     size_t tokenCount = 0;
     char* current = input;
     while (*current != '\0') {

@@ -6,7 +6,7 @@
 
 void compare_tokens(Token* expected, Token* actual) {
     assert(expected->type == actual->type);
-    assert(strncmp(expected->text, actual->text, strlen(expected->text)) == 0);
+    assert(strcmp(expected->text, actual->text) == 0);
     assert(expected->length == actual->length);
 }
 
@@ -16,7 +16,7 @@ void test_variable_assignment() {
 
     TokenList* expected = malloc(sizeof(TokenList));
     expected->length = 5;
-    expected->tokens = malloc(5 * sizeof(Token));
+    expected->tokens = malloc(expected->length * sizeof(Token));
     expected->tokens[0] = (Token){TOKEN_KEYWORD, "let", 3};
     expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "x", 1};
     expected->tokens[2] = (Token){TOKEN_OPERATOR, "=", 1};
@@ -43,8 +43,9 @@ void test_function_declaration() {
     printf("Testing function declaration...\n");
     char* input = "let add = (x, y) => x + y;";
     TokenList* expected = malloc(sizeof(TokenList));
-    expected->length = 11;
-    expected->tokens = malloc(11 * sizeof(Token));
+
+    expected->length = 13;
+    expected->tokens = malloc(expected->length * sizeof(Token));
     expected->tokens[0] = (Token){TOKEN_KEYWORD, "let", 3};
     expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "add", 3};
     expected->tokens[2] = (Token){TOKEN_OPERATOR, "=", 1};
