@@ -45,6 +45,8 @@ Token* parse_word(char** input) {
         token->type = TOKEN_LET;
     } else if (strcmp(token->text, "fn") == 0) {
         token->type = TOKEN_FN;
+    } else if(strcmp(token->text, "print") == 0) {
+        token->type = TOKEN_PRINT;
     }
 
     return token;
