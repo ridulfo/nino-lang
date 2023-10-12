@@ -7,6 +7,7 @@
  */
 enum TokenType {
     TOKEN_LET,
+    TOKEN_FN,
     TOKEN_SEPARATOR,
     TOKEN_IDENTIFIER,
     TOKEN_INT,
@@ -21,6 +22,7 @@ enum TokenType {
  */
 static char** TokenNames = (char*[]){
     "LET",
+    "FN",
     "SEPARATOR",
     "IDENTIFIER",
     "INT",

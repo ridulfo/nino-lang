@@ -41,12 +41,12 @@ void test_variable_assignment() {
 
 void test_function_declaration() {
     printf("Testing function declaration...\n");
-    char* input = "let add = (x, y) => x + y;";
+    char* input = "fn add = (x, y) => x + y;";
     TokenList* expected = malloc(sizeof(TokenList));
 
     expected->length = 13;
     expected->tokens = malloc(expected->length * sizeof(Token));
-    expected->tokens[0] = (Token){TOKEN_LET, "let", 3};
+    expected->tokens[0] = (Token){TOKEN_FN, "fn", 2};
     expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "add", 3};
     expected->tokens[2] = (Token){TOKEN_ASSIGNMENT, "=", 1};
     expected->tokens[3] = (Token){TOKEN_SEPARATOR, "(", 1};
@@ -68,7 +68,7 @@ void test_function_declaration() {
 
     assert(tokens->length == 13);
 
-    compare_tokens(&expected->tokens[0], &tokens->tokens[0]);    // "let"
+    compare_tokens(&expected->tokens[0], &tokens->tokens[0]);    // "fn"
     compare_tokens(&expected->tokens[1], &tokens->tokens[1]);    // "add"
     compare_tokens(&expected->tokens[2], &tokens->tokens[2]);    // "="
     compare_tokens(&expected->tokens[3], &tokens->tokens[3]);    // "("

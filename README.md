@@ -27,7 +27,7 @@ import {print} from "std/fmt"
 let x:i32 = 10;
 let y:i32 = 20;
 
-let add = (a:i32, b:i32):i32 => a + b;
+fn add = (a:i32, b:i32):i32 => a + b;
 
 let result = add(x, y);
 
@@ -35,13 +35,13 @@ print(result);
 ```
 
 ### Only work with functions
+
 ```Rust
 import {create_server, listen, Request, Response} from "std/server"
 
 // Callback function for /
-let index = (req:Request, res:Response) => {
-    res("Hello World!")
-}
+fn index = (req:Request, res:Response) => res("Hello World!")
+
 
 let server = create_server("localhost", 8080, {
     "/" => index
@@ -50,27 +50,28 @@ let server = create_server("localhost", 8080, {
 listen(server)
 ```
 
-### No if-statements, only matching. 
+### No if-statements, only matching.
+
 This is still a work in progress and will need to be decided. There needs to be a very light-weight syntax.
+
 ```Rust
 import {print} from "std/fmt"
 
 let dog_breed:str = "Whippet";
 
 let ability:str =
-    dog_breed ? { 
+    dog_breed ? {
       "Whippet"=>"run",
       "Husky"=>"pull"
-    }   
+    }
 
 
 ```
 
-
 ## Milestones
 
 - [x] Basic Lexer
-- [ ] Basic Parser
+- [x] Basic Parser
 - [ ] Functions, variables, i32, add, sub, mul, div
 - [ ] i64, f32, f64
 - [ ] match, map
@@ -88,7 +89,6 @@ let ability:str =
 ```bash
 make test
 ```
-
 
 ## Limitations
 

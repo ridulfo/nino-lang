@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 char** KeywordNames = (char*[]){"let"};
 
 Token* create_token(enum TokenType type, char* start, size_t length) {
@@ -44,6 +43,8 @@ Token* parse_word(char** input) {
     // check if the word is a keyword
     if (strcmp(token->text, "let") == 0) {
         token->type = TOKEN_LET;
+    } else if (strcmp(token->text, "fn") == 0) {
+        token->type = TOKEN_FN;
     }
 
     return token;
