@@ -6,17 +6,28 @@
  * @brief The different types of tokens.
  */
 enum TokenType {
-    TOKEN_KEYWORD,
+    TOKEN_LET,
     TOKEN_SEPARATOR,
     TOKEN_IDENTIFIER,
     TOKEN_INT,
+    TOKEN_ASSIGNMENT,
+    TOKEN_ARROW,
     TOKEN_OPERATOR,
+    TOKEN_END_STATEMENT
 };
 
 /**
  * @brief The names of the different types of tokens.
  */
-extern char** TokenNames;
+static char** TokenNames = (char*[]){
+    "LET",
+    "SEPARATOR",
+    "IDENTIFIER",
+    "INT",
+    "ASSIGNMENT",
+    "ARROW",
+    "OPERATOR",
+    "END_STATEMENT"};
 
 /**
  * @brief Token object that contains the type and the text of the token.
@@ -34,7 +45,6 @@ typedef struct TokenList {
     Token* tokens;
     size_t length;
 } TokenList;
-
 
 /**
  * @brief Lexes the input string and returns a list of tokens.

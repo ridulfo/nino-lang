@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-char** TokenNames = (char*[]){"KEYWORD", "SEPARATOR", "IDENTIFIER", "INT",
-                              "OPERATOR"};
 
 char** KeywordNames = (char*[]){"let"};
 
@@ -15,7 +13,7 @@ Token* create_token(enum TokenType type, char* start, size_t length) {
     token->type = type;
     token->length = length;
     token->text = malloc(length + 1);
-    
+
     strncpy(token->text, start, length);
     token->text[length] = '\0';
 
@@ -44,11 +42,8 @@ Token* parse_word(char** input) {
     Token* token = create_token(TOKEN_IDENTIFIER, start, length);
 
     // check if the word is a keyword
-    for (size_t i = 0; i < sizeof(KeywordNames) / sizeof(char*); i++) {
-        if (strcmp(KeywordNames[i], token->text) == 0) {
-            token->type = TOKEN_KEYWORD;
-            break;
-        }
+    if (strcmp(token->text, "let") == 0) {
+        token->type = TOKEN_LET;
     }
 
     return token;
@@ -74,10 +69,10 @@ TokenList* lex(char* input) {
 
         } else if (*current == '=') {
             if (*(current + 1) == '>') {
-                tokens[tokenCount] = *create_token(TOKEN_OPERATOR, current, 2);
+                tokens[tokenCount] = *create_token(TOKEN_ARROW, current, 2);
                 current += 2;
             } else {
-                tokens[tokenCount] = *create_token(TOKEN_OPERATOR, current, 1);
+                tokens[tokenCount] = *create_token(TOKEN_ASSIGNMENT, current, 1);
                 current++;
             }
 
@@ -93,7 +88,7 @@ TokenList* lex(char* input) {
         } else if (*current >= 'a' && *current <= 'z') {
             tokens[tokenCount] = *parse_word(&current);
         } else if (*current == ';') {
-            tokens[tokenCount] = *create_token(TOKEN_SEPARATOR, current, 1);
+            tokens[tokenCount] = *create_token(TOKEN_END_STATEMENT, current, 1);
             current++;
 
         } else {
