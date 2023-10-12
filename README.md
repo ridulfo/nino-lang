@@ -17,9 +17,25 @@ It will be a functional programming language with a syntax similar to [rust](<ht
 
 It will not have a garbage collector (TBD 🤨).
 
-## Syntax:
+## Syntax (WIP)
 
-(very much a work in progress)
+### Currently supported
+
+```Rust
+let x = 13;
+let y = 14;
+
+print(y);
+```
+
+**To run:**
+
+1. `make parser`
+1. `./build/parser`
+1. `clang output.ll`
+1. `./a.out`
+
+### In the future...
 
 ```Rust
 import {print} from "std/fmt"
@@ -34,7 +50,7 @@ let result = add(x, y);
 print(result);
 ```
 
-### Only work with functions
+#### Only work with functions
 
 ```Rust
 import {create_server, listen, Request, Response} from "std/server"
@@ -50,7 +66,7 @@ let server = create_server("localhost", 8080, {
 listen(server)
 ```
 
-### No if-statements, only matching.
+#### No if-statements, only matching.
 
 This is still a work in progress and will need to be decided. There needs to be a very light-weight syntax.
 
