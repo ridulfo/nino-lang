@@ -49,6 +49,17 @@ Token* parse_word(char** input) {
     return token;
 }
 
+Token* parse_number(char** input) {
+    size_t length = 0;
+    char* start = *input;
+    while (**input >= '0' && **input <= '9') {
+        (*input)++;
+        length++;
+    }
+    Token* token = create_token(TOKEN_INT, start, length);
+    return token;
+}
+
 TokenList* lex(char* input) {
     printf("%s\n", input);
     Token* tokens = malloc(1000 * sizeof(Token));
@@ -82,11 +93,11 @@ TokenList* lex(char* input) {
             current++;
 
         } else if (*current >= '0' && *current <= '9') {
-            tokens[tokenCount] = *create_token(TOKEN_INT, current, 1);
-            current++;
+            tokens[tokenCount] = *parse_number(&current);
 
         } else if (*current >= 'a' && *current <= 'z') {
             tokens[tokenCount] = *parse_word(&current);
+
         } else if (*current == ';') {
             tokens[tokenCount] = *create_token(TOKEN_END_STATEMENT, current, 1);
             current++;

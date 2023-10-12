@@ -12,7 +12,7 @@ void compare_tokens(Token* expected, Token* actual) {
 
 void test_variable_assignment() {
     printf("Testing assignment...\n");
-    char* input = "let x = 5;";
+    char* input = "let x = 55;";
 
     TokenList* expected = malloc(sizeof(TokenList));
     expected->length = 5;
@@ -20,7 +20,7 @@ void test_variable_assignment() {
     expected->tokens[0] = (Token){TOKEN_LET, "let", 3};
     expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "x", 1};
     expected->tokens[2] = (Token){TOKEN_ASSIGNMENT, "=", 1};
-    expected->tokens[3] = (Token){TOKEN_INT, "5", 1};
+    expected->tokens[3] = (Token){TOKEN_INT, "55", 2};
     expected->tokens[4] = (Token){TOKEN_END_STATEMENT, ";", 1};
 
     TokenList* tokens = lex(input);
