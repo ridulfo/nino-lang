@@ -21,7 +21,7 @@ void test_variable_assignment() {
     expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "x", 1};
     expected->tokens[2] = (Token){TOKEN_ASSIGNMENT, "=", 1};
     expected->tokens[3] = (Token){TOKEN_INT, "55", 2};
-    expected->tokens[4] = (Token){TOKEN_END_STATEMENT, ";", 1};
+    expected->tokens[4] = (Token){TOKEN_SEMICOLON, ";", 1};
 
     TokenList* tokens = lex(input);
 
@@ -49,16 +49,16 @@ void test_function_declaration() {
     expected->tokens[0] = (Token){TOKEN_FN, "fn", 2};
     expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "add", 3};
     expected->tokens[2] = (Token){TOKEN_ASSIGNMENT, "=", 1};
-    expected->tokens[3] = (Token){TOKEN_SEPARATOR, "(", 1};
+    expected->tokens[3] = (Token){TOKEN_LPAREN, "(", 1};
     expected->tokens[4] = (Token){TOKEN_IDENTIFIER, "x", 1};
-    expected->tokens[5] = (Token){TOKEN_SEPARATOR, ",", 1};
+    expected->tokens[5] = (Token){TOKEN_COMMA, ",", 1};
     expected->tokens[6] = (Token){TOKEN_IDENTIFIER, "y", 1};
-    expected->tokens[7] = (Token){TOKEN_SEPARATOR, ")", 1};
+    expected->tokens[7] = (Token){TOKEN_RPAREN, ")", 1};
     expected->tokens[8] = (Token){TOKEN_ARROW, "=>", 2};
     expected->tokens[9] = (Token){TOKEN_IDENTIFIER, "x", 1};
-    expected->tokens[10] = (Token){TOKEN_OPERATOR, "+", 1};
+    expected->tokens[10] = (Token){TOKEN_ADD, "+", 1};
     expected->tokens[11] = (Token){TOKEN_IDENTIFIER, "y", 1};
-    expected->tokens[12] = (Token){TOKEN_END_STATEMENT, ";", 1};
+    expected->tokens[12] = (Token){TOKEN_SEMICOLON, ";", 1};
 
     TokenList* tokens = lex(input);
 

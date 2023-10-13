@@ -17,7 +17,7 @@ parser: build/parser.o build/lexer.o
 build/lexer.test.o: build/lexer.o tests/lexer.test.c
 	$(CC) $(CFLAGS) -o build/lexer.test.o -c tests/lexer.test.c	
 
-test: build/lexer.o build/lexer.test.o
+test-lexer: build/lexer.o build/lexer.test.o
 	$(CC) $(CFLAGS) -o build/lexer.test build/lexer.test.o build/lexer.o
 	./build/lexer.test
 

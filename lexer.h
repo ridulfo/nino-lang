@@ -6,16 +6,38 @@
  * @brief The different types of tokens.
  */
 enum TokenType {
+    // keywords
     TOKEN_LET,
     TOKEN_FN,
-    TOKEN_PRINT,
-    TOKEN_SEPARATOR,
-    TOKEN_IDENTIFIER,
+
+    // types
     TOKEN_INT,
+
+    // builtins
+    TOKEN_PRINT,
+
+    // separators
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_COMMA,
+    TOKEN_SEMICOLON,
+
+    // identifiers
+    TOKEN_IDENTIFIER,
+
+    // operators
+    TOKEN_ADD,
+    TOKEN_SUB,
+    TOKEN_MUL,
+    TOKEN_DIV,
+
+    // don't know what to call these
     TOKEN_ASSIGNMENT,
     TOKEN_ARROW,
-    TOKEN_OPERATOR,
-    TOKEN_END_STATEMENT
+
+    // equality
+    TOKEN_EQUAL,
+    TOKEN_NOTEQUAL,
 };
 
 /**
@@ -24,14 +46,29 @@ enum TokenType {
 static char** TokenNames = (char*[]){
     "LET",
     "FN",
-    "PRINT",
-    "SEPARATOR",
-    "IDENTIFIER",
+
     "INT",
+
+    "PRINT",
+
+    "LPAREN",
+    "RPAREN",
+    "COMMA",
+    "SEMICOLON",
+
+    "IDENTIFIER",
+
+    "ADD",
+    "SUB",
+    "MUL",
+    "DIV",
+
     "ASSIGNMENT",
     "ARROW",
-    "OPERATOR",
-    "END_STATEMENT"};
+
+    "EQUAL",
+    "NOTEQUAL",
+};
 
 /**
  * @brief Token object that contains the type and the text of the token.

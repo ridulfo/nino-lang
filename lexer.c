@@ -45,7 +45,7 @@ Token* parse_word(char** input) {
         token->type = TOKEN_LET;
     } else if (strcmp(token->text, "fn") == 0) {
         token->type = TOKEN_FN;
-    } else if(strcmp(token->text, "print") == 0) {
+    } else if (strcmp(token->text, "print") == 0) {
         token->type = TOKEN_PRINT;
     }
 
@@ -76,13 +76,31 @@ TokenList* lex(char* input) {
     while (*current != '\0') {
         consume_whitespace(&current);
 
-        if (*current == '(' || *current == ')' || *current == ',') {
-            tokens[tokenCount] = *create_token(TOKEN_SEPARATOR, current, 1);
-
+        if (*current == '(') {
+            tokens[tokenCount] = *create_token(TOKEN_LPAREN, current, 1);
             current++;
 
+        } else if (*current == ')') {
+            tokens[tokenCount] = *create_token(TOKEN_RPAREN, current, 1);
+            current++;
+
+        } else if (*current == ',') {
+            tokens[tokenCount] = *create_token(TOKEN_COMMA, current, 1);
+            current++;
+        } else if (*current == '!') {
+            if (*(current + 1) == '=') {
+                tokens[tokenCount] = *create_token(TOKEN_NOTEQUAL, current, 2);
+                current += 2;
+            } else {
+                printf("Unknown character: %c\n", *current);
+                exit(1);
+            }
+
         } else if (*current == '=') {
-            if (*(current + 1) == '>') {
+            if (*(current + 1) == '=') {
+                tokens[tokenCount] = *create_token(TOKEN_EQUAL, current, 2);
+                current += 2;
+            } else if (*(current + 1) == '>') {
                 tokens[tokenCount] = *create_token(TOKEN_ARROW, current, 2);
                 current += 2;
             } else {
@@ -90,9 +108,20 @@ TokenList* lex(char* input) {
                 current++;
             }
 
-        } else if (*current == '+' || *current == '-' || *current == '*' ||
-                   *current == '/') {
-            tokens[tokenCount] = *create_token(TOKEN_OPERATOR, current, 1);
+        } else if (*current == '+') {
+            tokens[tokenCount] = *create_token(TOKEN_ADD, current, 1);
+            current++;
+
+        } else if (*current == '-') {
+            tokens[tokenCount] = *create_token(TOKEN_SUB, current, 1);
+            current++;
+
+        } else if (*current == '*') {
+            tokens[tokenCount] = *create_token(TOKEN_MUL, current, 1);
+            current++;
+
+        } else if (*current == '/') {
+            tokens[tokenCount] = *create_token(TOKEN_DIV, current, 1);
             current++;
 
         } else if (*current >= '0' && *current <= '9') {
@@ -102,7 +131,7 @@ TokenList* lex(char* input) {
             tokens[tokenCount] = *parse_word(&current);
 
         } else if (*current == ';') {
-            tokens[tokenCount] = *create_token(TOKEN_END_STATEMENT, current, 1);
+            tokens[tokenCount] = *create_token(TOKEN_SEMICOLON, current, 1);
             current++;
 
         } else {

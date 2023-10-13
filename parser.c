@@ -30,16 +30,17 @@ char* build_print(Token* token) {
     assert(token->type == TOKEN_PRINT);
     token++;  // skip the PRINT token
 
-    assert(token->type == TOKEN_SEPARATOR);
+    assert(token->type == TOKEN_LPAREN);
     token++;  // skip the SEPARATOR token
 
+    assert(token->type == TOKEN_IDENTIFIER);
     char* identifier = token->text;
     token++;  // consume the IDENTIFIER token
-    
-    assert(token->type == TOKEN_SEPARATOR);
+
+    assert(token->type == TOKEN_RPAREN);
     token++;  // skip the SEPARATOR token
 
-    assert(token->type == TOKEN_END_STATEMENT);
+    assert(token->type == TOKEN_SEMICOLON);
     token++;  // consume the END_STATEMENT token
 
     char* output = malloc(100 * sizeof(char));
@@ -56,16 +57,18 @@ char* build_let(Token* token) {
     assert(token->type == TOKEN_LET);
     token++;  // skip the LET token
 
+    assert(token->type == TOKEN_IDENTIFIER);
     char* identifier = token->text;
     token++;  // consume the IDENTIFIER token
 
     assert(token->type == TOKEN_ASSIGNMENT);
     token++;  // skip the ASSIGNMENT token
 
+    assert(token->type == TOKEN_INT);
     char* value = token->text;
     token++;  // consume the value token
 
-    assert(token->type == TOKEN_END_STATEMENT);
+    assert(token->type == TOKEN_SEMICOLON);
     token++;  // consume the END_STATEMENT token
 
     char* output = malloc(100 * sizeof(char));
@@ -120,9 +123,10 @@ char* parser(TokenList* tokens) {
 }
 
 int main() {
-    char* input = "let x = 13;"
-                  "let y = 14;"
-                  "print(y);";
+    char* input =
+        "let x = 13;"
+        "let y = 14;"
+        "print(y);";
     TokenList* tokens = lex(input);
 
     char* output = parser(tokens);
