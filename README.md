@@ -17,7 +17,12 @@ It will be a functional programming language with a syntax similar to [rust](<ht
 
 It will not have a garbage collector (TBD 🤨).
 
+## Current status
+- 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
+
 ## Syntax (WIP)
+
+The syntax definition in [Backus-Naur form](https://en.wikipedia.org/wiki/Backus–Naur_form) can be found [here](docs/BNF.md).
 
 ### Currently supported
 
@@ -45,7 +50,7 @@ let y:i32 = 20;
 
 fn add = (a:i32, b:i32):i32 => a + b;
 
-let result = add(x, y);
+let result:i32 = add(x, y);
 
 print(result);
 ```
@@ -53,13 +58,13 @@ print(result);
 #### Only work with functions
 
 ```Rust
-import {create_server, listen, Request, Response} from "std/server"
+import {create_server, listen, Server, Request, Response} from "std/server"
 
 // Callback function for /
-fn index = (req:Request, res:Response) => res("Hello World!")
+fn index = (req:Request, res:Response):void => res("Hello World!")
 
 
-let server = create_server("localhost", 8080, {
+let server: Server = create_server("localhost", 8080, {
     "/" => index
 })
 
@@ -69,6 +74,8 @@ listen(server)
 #### No if-statements, only matching.
 
 This is still a work in progress and will need to be decided. There needs to be a very light-weight syntax.
+
+`str` type is syntactic sugar for `[i8]`
 
 ```Rust
 import {print} from "std/fmt"
@@ -80,17 +87,55 @@ let ability:str =
       "Whippet"=>"run",
       "Husky"=>"pull"
     }
+```
 
+#### is_prime
 
+```Rust
+import {sqrt, floor} from "std/math"
+
+fn is_prime_helper = (x:i32, i:i32, sqrt_x_int:i32):bool =>
+    true ? {
+        i > sqrt_x_int => true,
+        x mod i == 0 => false,
+        true => is_prime_helper(x, i+2, sqrt_x_int)
+    };
+
+fn is_prime = (x:i32):bool =>
+    | sqrt_x:f32 = sqrt(x);
+    | sqrt_x_int:i32 = floor(sqrt_x);
+    => true ? {
+        x==1 => false,
+        x==2 => true,
+        x mod 2 == 0 => false,
+        true => is_prime_helper(x, 3, sqrt_x_int)
+    };
+```
+
+#### Built-in functions
+
+**map**
+
+```Rust
+/** Caesar cipher
+*
+* Rotates lowercase strings by x
+*/
+fn rot = (x:i8, s:[i8]):[i8] =>
+    map(s, (c:i8) => 'a' + (c - 'a' + x) mod 26);
 ```
 
 ## Milestones
 
-- [x] Basic Lexer
-- [x] Basic Parser
-- [ ] Functions, variables, i32, add, sub, mul, div
-- [ ] i64, f32, f64
-- [ ] match, map
+- [x] Define complete syntax
+- [ ] Basic Lexer
+- [ ] Basic Parser
+- [ ] built-in functions
+    - [ ] print
+    - [ ] pattern-matching
+    - [ ] map
+    - [ ] filter
+    - [ ] reduce
 - [ ] arrays, strings
 - [ ] self-host compiler
 - [ ] [**SOLVE ADVENT OF CODE**](https://time-since.nicolo.io/#/20231201-000000?title=Advent+of+code)
