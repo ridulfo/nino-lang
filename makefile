@@ -11,15 +11,15 @@ build/lexer.o: lexer.c lexer.h
 build/parser.o: parser.c
 	$(CC) $(CFLAGS) -o build/parser.o -c parser.c
 
-parser: build/parser.o build/lexer.o
-	$(CC) $(CFLAGS) -o build/parser build/parser.o build/lexer.o
-
 build/lexer.test.o: build/lexer.o tests/lexer.test.c
 	$(CC) $(CFLAGS) -o build/lexer.test.o -c tests/lexer.test.c	
 
 test-lexer: build/lexer.o build/lexer.test.o
 	$(CC) $(CFLAGS) -o build/lexer.test build/lexer.test.o build/lexer.o
 	./build/lexer.test
+
+test-parser: build/parser.o build/lexer.o
+	$(CC) $(CFLAGS) -o build/parser.test tests/parser.test.c build/parser.o build/lexer.o
 
 clean:
 	rm -f build/*

@@ -26,7 +26,7 @@ void _print_token(Token* token) {
 
 // consumes all whitespace characters from the input
 void consume_whitespace(char** input) {
-    while (**input == ' ' || **input == '\n') {
+    while (**input == ' ' || **input == '\n' || **input == '\t') {
         (*input)++;
     }
 }
@@ -64,7 +64,6 @@ Token* parse_number(char** input) {
 }
 
 TokenList* lex(char* input) {
-    printf("%s\n", input);
     Token* tokens = malloc(1000 * sizeof(Token));
     if (tokens == NULL) {
         printf("Memory allocation failed\n");
@@ -135,7 +134,9 @@ TokenList* lex(char* input) {
             current++;
 
         } else {
-            printf("Unknown character: %c\n", *current);
+            if (*current == '\0') break;
+
+            printf("Unknown character: %c. ASCII: %d.\n", *current, *current);
             exit(1);
         }
         tokenCount++;

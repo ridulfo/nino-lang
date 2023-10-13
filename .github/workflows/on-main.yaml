@@ -16,5 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    
+    - name: Making build directory
+      run: mkdir build
+
     - name: Run lexer tests
-      run: mkdir build && make test-lexer
+      run: make test-lexer
+
+    - name: Run parser tests
+      run: bash tests/e2e-test.sh

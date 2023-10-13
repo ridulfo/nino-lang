@@ -118,29 +118,5 @@ char* parser(TokenList* tokens) {
 
     strcat(output, footer_main_block);
 
-    printf("\n%s", output);
     return output;
-}
-
-int main() {
-    char* input =
-        "let x = 13;"
-        "let y = 14;"
-        "print(y);";
-    TokenList* tokens = lex(input);
-
-    char* output = parser(tokens);
-
-    char* output_file = "output.ll";
-    FILE* fp = fopen(output_file, "w");
-    if (fp == NULL) {
-        printf("Error: Could not open file %s for writing.\n", output_file);
-        return 1;
-    }
-
-    fprintf(fp, "%s", output);  // write output to file
-
-    fclose(fp);  // close file pointer
-
-    return 0;
 }
