@@ -45,9 +45,9 @@
 <binary_operator>  ::= "+" | "-" | "*" | "/"
 
 # Pattern-matching expression
-<pattern_match> ::= <identifier> "?" "{" <pattern_matches> "}"
+<pattern_match> ::= <expression> "?" "{" <pattern_matches> "}"
 <pattern_matches> ::= <pattern_match> | <pattern_match> "," <pattern_matches>
-<pattern_match> ::= <identifier> "=>" <expression>
+<pattern_match> ::= <expression> "=>" <expression>
 
 # import
 <import> ::= "import" "{" <import_list> "}" | "import" <identifier> "from" <string_literal>

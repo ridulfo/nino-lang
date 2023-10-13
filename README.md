@@ -43,7 +43,7 @@ print(y);
 ### In the future...
 
 ```Rust
-import {print} from "std/fmt"
+import {print} from "std/fmt";
 
 let x:i32 = 10;
 let y:i32 = 20;
@@ -58,7 +58,7 @@ print(result);
 #### Only work with functions
 
 ```Rust
-import {create_server, listen, Server, Request, Response} from "std/server"
+import {create_server, listen, Server, Request, Response} from "std/server";
 
 // Callback function for /
 fn index = (req:Request, res:Response):void => res("Hello World!")
@@ -78,7 +78,7 @@ This is still a work in progress and will need to be decided. There needs to be 
 `str` type is syntactic sugar for `[i8]`
 
 ```Rust
-import {print} from "std/fmt"
+import {print} from "std/fmt";
 
 let dog_breed:str = "Whippet";
 
@@ -92,7 +92,7 @@ let ability:str =
 #### is_prime
 
 ```Rust
-import {sqrt, floor} from "std/math"
+import {sqrt, floor} from "std/math";
 
 fn is_prime_helper = (x:i32, i:i32, sqrt_x_int:i32):bool =>
     true ? {
