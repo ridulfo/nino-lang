@@ -5,82 +5,163 @@
 #include <string.h>
 
 void compare_tokens(Token* expected, Token* actual) {
-    assert(expected->type == actual->type);
-    assert(strcmp(expected->text, actual->text) == 0);
-    assert(expected->length == actual->length);
+    int failed = 0;
+    if (expected->type != actual->type) {
+        printf("Expected type: %s, Actual type: %s\n", TokenNames[expected->type], TokenNames[actual->type]);
+        failed = 1;
+    }
+    if (strcmp(expected->text, actual->text) != 0) {
+        printf("Expected text: %s, Actual text: %s\n", expected->text, actual->text);
+        failed = 1;
+    }
+    if (expected->length != actual->length) {
+        printf("Expected length: %zu, Actual length: %zu\n", expected->length, actual->length);
+        failed = 1;
+    }
+    if (failed) {
+        print_token(expected);
+        assert(0);
+    }
 }
 
 void test_variable_assignment() {
     printf("Testing assignment...\n");
-    char* input = "let x = 55;";
+    char* input = "let x:i32 = 55;";
+    printf("Input: %s\n", input);
 
     TokenList* expected = malloc(sizeof(TokenList));
-    expected->length = 5;
+    Token expected_tokens[] = {
+        {TOKEN_LET, "let", 3},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_COLON, ":", 1},
+        {TOKEN_TYPE, "i32", 3},
+        {TOKEN_ASSIGNMENT, "=", 1},
+        {TOKEN_LITERAL_INT, "55", 2},
+        {TOKEN_SEMICOLON, ";", 1},
+    };
+
+    expected->length = 7;
     expected->tokens = malloc(expected->length * sizeof(Token));
-    expected->tokens[0] = (Token){TOKEN_LET, "let", 3};
-    expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "x", 1};
-    expected->tokens[2] = (Token){TOKEN_ASSIGNMENT, "=", 1};
-    expected->tokens[3] = (Token){TOKEN_INT, "55", 2};
-    expected->tokens[4] = (Token){TOKEN_SEMICOLON, ";", 1};
+    memcpy(expected->tokens, expected_tokens, expected->length * sizeof(Token));
 
     TokenList* tokens = lex(input);
 
     for (size_t i = 0; i < tokens->length; i++) {
-        _print_token(&tokens->tokens[i]);
+        print_token(&tokens->tokens[i]);
     }
-    assert(tokens->length == 5);
+    assert(tokens->length == expected->length);
 
-    compare_tokens(&expected->tokens[0], &tokens->tokens[0]);  // "let"
-    compare_tokens(&expected->tokens[1], &tokens->tokens[1]);  // "x"
-    compare_tokens(&expected->tokens[2], &tokens->tokens[2]);  // "="
-    compare_tokens(&expected->tokens[3], &tokens->tokens[3]);  // "5"
-    compare_tokens(&expected->tokens[4], &tokens->tokens[4]);  // ";"
+    for (size_t i = 0; i < tokens->length; i++) {
+        compare_tokens(&expected->tokens[i], &tokens->tokens[i]);
+    }
 
     printf("Passed!\n\n");
 }
 
 void test_function_declaration() {
     printf("Testing function declaration...\n");
-    char* input = "fn add = (x, y) => x + y;";
+    char* input =
+        "fn is_prime = (x:i32):bool =>"
+        "| let sqrt_x:f32 = sqrt(x);"
+        "| let sqrt_x_int:i32 = floor(sqrt_x);"
+        "=> true ? {"
+        "    x==1 => false,"
+        "    x==2 => true,"
+        "    x mod 2 == 0 => false,"
+        "    true => is_prime_helper(x, 3, sqrt_x_int)"
+        "};";
     TokenList* expected = malloc(sizeof(TokenList));
 
-    expected->length = 13;
+    Token expected_tokens[] = {
+        {TOKEN_FN, "fn", 2},
+        {TOKEN_IDENTIFIER, "is_prime", 8},
+        {TOKEN_ASSIGNMENT, "=", 1},
+        {TOKEN_LPAREN, "(", 1},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_COLON, ":", 1},
+        {TOKEN_TYPE, "i32", 3},
+        {TOKEN_RPAREN, ")", 1},
+        {TOKEN_COLON, ":", 1},
+        {TOKEN_TYPE, "bool", 4},
+        {TOKEN_ARROW, "=>", 2},
+        {TOKEN_PIPE, "|", 1},
+        {TOKEN_LET, "let", 3},
+        {TOKEN_IDENTIFIER, "sqrt_x", 6},
+        {TOKEN_COLON, ":", 1},
+        {TOKEN_TYPE, "f32", 3},
+        {TOKEN_ASSIGNMENT, "=", 1},
+        {TOKEN_IDENTIFIER, "sqrt", 4},
+        {TOKEN_LPAREN, "(", 1},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_RPAREN, ")", 1},
+        {TOKEN_SEMICOLON, ";", 1},
+        {TOKEN_PIPE, "|", 1},
+        {TOKEN_LET, "let", 3},
+        {TOKEN_IDENTIFIER, "sqrt_x_int", 10},
+        {TOKEN_COLON, ":", 1},
+        {TOKEN_TYPE, "i32", 3},
+        {TOKEN_ASSIGNMENT, "=", 1},
+        {TOKEN_IDENTIFIER, "floor", 5},
+        {TOKEN_LPAREN, "(", 1},
+        {TOKEN_IDENTIFIER, "sqrt_x", 6},
+        {TOKEN_RPAREN, ")", 1},
+        {TOKEN_SEMICOLON, ";", 1},
+        {TOKEN_ARROW, "=>", 2},
+        {TOKEN_LITERAL_BOOL, "true", 4},
+        {TOKEN_QUESTION, "?", 1},
+        {TOKEN_LBRACE, "{", 1},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_EQUAL, "==", 2},
+        {TOKEN_LITERAL_INT, "1", 1},
+        {TOKEN_ARROW, "=>", 2},
+        {TOKEN_LITERAL_BOOL, "false", 5},
+        {TOKEN_COMMA, ",", 1},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_EQUAL, "==", 2},
+        {TOKEN_LITERAL_INT, "2", 1},
+        {TOKEN_ARROW, "=>", 2},
+        {TOKEN_LITERAL_BOOL, "true", 4},
+        {TOKEN_COMMA, ",", 1},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_MOD, "mod", 3},
+        {TOKEN_LITERAL_INT, "2", 1},
+        {TOKEN_EQUAL, "==", 2},
+        {TOKEN_LITERAL_INT, "0", 1},
+        {TOKEN_ARROW, "=>", 2},
+        {TOKEN_LITERAL_BOOL, "false", 5},
+        {TOKEN_COMMA, ",", 1},
+        {TOKEN_LITERAL_BOOL, "true", 4},
+        {TOKEN_ARROW, "=>", 2},
+        {TOKEN_IDENTIFIER, "is_prime_helper", 15},
+        {TOKEN_LPAREN, "(", 1},
+        {TOKEN_IDENTIFIER, "x", 1},
+        {TOKEN_COMMA, ",", 1},
+        {TOKEN_LITERAL_INT, "3", 1},
+        {TOKEN_COMMA, ",", 1},
+        {TOKEN_IDENTIFIER, "sqrt_x_int", 10},
+        {TOKEN_RPAREN, ")", 1},
+        {TOKEN_RBRACE, "}", 1},
+        {TOKEN_SEMICOLON, ";", 1},
+    };
+
+    expected->length = 69;
     expected->tokens = malloc(expected->length * sizeof(Token));
-    expected->tokens[0] = (Token){TOKEN_FN, "fn", 2};
-    expected->tokens[1] = (Token){TOKEN_IDENTIFIER, "add", 3};
-    expected->tokens[2] = (Token){TOKEN_ASSIGNMENT, "=", 1};
-    expected->tokens[3] = (Token){TOKEN_LPAREN, "(", 1};
-    expected->tokens[4] = (Token){TOKEN_IDENTIFIER, "x", 1};
-    expected->tokens[5] = (Token){TOKEN_COMMA, ",", 1};
-    expected->tokens[6] = (Token){TOKEN_IDENTIFIER, "y", 1};
-    expected->tokens[7] = (Token){TOKEN_RPAREN, ")", 1};
-    expected->tokens[8] = (Token){TOKEN_ARROW, "=>", 2};
-    expected->tokens[9] = (Token){TOKEN_IDENTIFIER, "x", 1};
-    expected->tokens[10] = (Token){TOKEN_ADD, "+", 1};
-    expected->tokens[11] = (Token){TOKEN_IDENTIFIER, "y", 1};
-    expected->tokens[12] = (Token){TOKEN_SEMICOLON, ";", 1};
+    memcpy(expected->tokens, expected_tokens, expected->length * sizeof(Token));
 
     TokenList* tokens = lex(input);
 
     for (size_t i = 0; i < tokens->length; i++) {
-        _print_token(&tokens->tokens[i]);
+        print_token(&tokens->tokens[i]);
     }
 
-    assert(tokens->length == 13);
+    if (tokens->length != expected->length) {
+        printf("Expected length: %zu, Actual length: %zu\n", expected->length, tokens->length);
+        assert(0);
+    }
 
-    compare_tokens(&expected->tokens[0], &tokens->tokens[0]);    // "fn"
-    compare_tokens(&expected->tokens[1], &tokens->tokens[1]);    // "add"
-    compare_tokens(&expected->tokens[2], &tokens->tokens[2]);    // "="
-    compare_tokens(&expected->tokens[3], &tokens->tokens[3]);    // "("
-    compare_tokens(&expected->tokens[4], &tokens->tokens[4]);    // "x"
-    compare_tokens(&expected->tokens[5], &tokens->tokens[5]);    // ","
-    compare_tokens(&expected->tokens[6], &tokens->tokens[6]);    // "y"
-    compare_tokens(&expected->tokens[7], &tokens->tokens[7]);    // ")"
-    compare_tokens(&expected->tokens[8], &tokens->tokens[8]);    // "=>"
-    compare_tokens(&expected->tokens[9], &tokens->tokens[9]);    // "x"
-    compare_tokens(&expected->tokens[10], &tokens->tokens[10]);  // "+"
-    compare_tokens(&expected->tokens[11], &tokens->tokens[11]);  // "y"
-    compare_tokens(&expected->tokens[12], &tokens->tokens[12]);  // ";"
+    for (size_t i = 0; i < tokens->length; i++) {
+        compare_tokens(&expected->tokens[i], &tokens->tokens[i]);
+    }
 
     printf("Passed!\n\n");
 }
