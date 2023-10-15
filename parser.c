@@ -180,6 +180,7 @@ ASTList* parse(TokenList* tokens) {
     printf("Abstract Syntax Tree:\n");
     for (int i = 0; i < (int)items_length; i++) {
         rec_print_ast_tree(items[i], 0);
+        printf("\n");
     }
 
     ASTList* ast_list = malloc(sizeof(ASTList));
