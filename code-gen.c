@@ -61,24 +61,68 @@ char* id_gen() {
         printf("Error: Could not allocate memory for output string.\n");
         return NULL;
     }
-    sprintf(output, "%%%d", id);
+    sprintf(output, "%d", id);
     id++;
     return output;
 }
 
-char* build_expression(Expression* expression, char* output) {
+/**
+ * @brief Build an expression
+ *
+ * @param identifier the identifier given by the parent expression
+ */
+char* build_expression(char* identifier, Expression* expression, char* output) {
     if (expression->type == AST_INTEGER_LITERAL) {
-        char* identifier = id_gen();
         char* type = expression->data.Literal.type_name;
         char* value = expression->data.Literal.value;
 
         sprintf(output,
-                "  %s = alloca %s\n"
-                "  store %s %s, %s* %s\n\n",
+                "  %%%s = alloca %s\n"
+                "  store %s %s, %s* %%%s\n\n",
                 identifier, type, type, value, type, identifier);
-        return output;
+        return identifier;
     }
-    
+
+    if (expression->type == AST_IDENTIFIER) {
+        char* identifier = expression->data.Identifier.value;
+        strcat(output, identifier);
+        return identifier;
+    }
+
+    if (expression->type == AST_BINARY_OPERATION) {
+        // The id to be used for the left and right expressions if they do not return a identifier
+        char* left_expr_id = malloc(100 * sizeof(char));
+        strcpy(left_expr_id, identifier);
+        left_expr_id = strcat(left_expr_id, id_gen());
+
+        char* right_expr_id = malloc(100 * sizeof(char));
+        strcpy(right_expr_id, identifier);
+        right_expr_id = strcat(right_expr_id, id_gen());
+
+        char* left_ptr_id = build_expression(left_expr_id, expression->data.BinaryOperation.left, output);
+        char* right_ptr_id = build_expression(right_expr_id, expression->data.BinaryOperation.right, output);
+
+        char* left_load_id = malloc(100 * sizeof(char));
+        strcpy(left_load_id, identifier);
+        left_load_id = strcat(left_load_id, id_gen());
+
+        char* right_load_id = malloc(100 * sizeof(char));
+        strcpy(right_load_id, identifier);
+        right_load_id = strcat(right_load_id, id_gen());
+
+        if (output == NULL) {
+            printf("Error: Could not allocate memory for output string.\n");
+
+        }
+        sprintf(output,
+                "  %%%s = load i32, i32* %%%s\n"
+                "  %%%s = load i32, i32* %%%s\n"
+                "  %%%s = %s i32 %%%s, %%%s\n",
+                left_load_id, left_ptr_id,
+                right_load_id, right_ptr_id,
+                identifier, "add", left_load_id, right_load_id);
+
+    }
     return NULL;
 }
 
@@ -92,7 +136,7 @@ char* build_let(Declaration* declaration) {
     }
 
     Expression* expression = declaration->expression;
-    build_expression(expression, output);
+    build_expression(declaration->identifier, expression, output);
 
     return output;
 }
@@ -121,7 +165,7 @@ char* code_gen(ASTList* ast_list) {
             strcat(output, build_let(&node->data.Declaration));
         }
     }
-    
+
     strcat(output, footer_main_block);
 
     return output;
