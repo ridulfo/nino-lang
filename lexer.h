@@ -10,17 +10,29 @@ enum TokenType {
     TOKEN_LET,
     TOKEN_FN,
 
-    // types
-    TOKEN_INT,
+    // types and values
+    TOKEN_TYPE,
+    TOKEN_LITERAL_INT,
+    TOKEN_LITERAL_FLOAT,
+    TOKEN_LITERAL_STRING,
+    TOKEN_LITERAL_BOOL,
 
     // builtins
     TOKEN_PRINT,
+    TOKEN_MOD,
 
     // separators
     TOKEN_LPAREN,
     TOKEN_RPAREN,
+    TOKEN_LBRACKET,
+    TOKEN_RBRACKET,
+    TOKEN_LBRACE,
+    TOKEN_RBRACE,
     TOKEN_COMMA,
+    TOKEN_COLON,
     TOKEN_SEMICOLON,
+    TOKEN_QUOTE,
+    TOKEN_PIPE,
 
     // identifiers
     TOKEN_IDENTIFIER,
@@ -30,14 +42,23 @@ enum TokenType {
     TOKEN_SUB,
     TOKEN_MUL,
     TOKEN_DIV,
+    TOKEN_NOT,
 
     // don't know what to call these
     TOKEN_ASSIGNMENT,
     TOKEN_ARROW,
+    TOKEN_QUESTION,
 
     // equality
     TOKEN_EQUAL,
     TOKEN_NOTEQUAL,
+    TOKEN_GTHAN,
+    TOKEN_GETHAN,
+    TOKEN_LTHAN,
+    TOKEN_LETHAN,
+
+    // end of file
+    TOKEN_EOF
 };
 
 /**
@@ -47,14 +68,26 @@ static char** TokenNames = (char*[]){
     "LET",
     "FN",
 
-    "INT",
+    "TYPE",
+    "LITERAL_INT",
+    "LITERAL_FLOAT",
+    "LITERAL_STRING",
+    "LITERAL_BOOL",
 
     "PRINT",
+    "MOD",
 
     "LPAREN",
     "RPAREN",
+    "LBRACKET",
+    "RBRACKET",
+    "LBRACE",
+    "RBRACE",
     "COMMA",
+    "COLON",
     "SEMICOLON",
+    "QUOTE",
+    "PIPE",
 
     "IDENTIFIER",
 
@@ -62,12 +95,21 @@ static char** TokenNames = (char*[]){
     "SUB",
     "MUL",
     "DIV",
+    "NOT",
 
     "ASSIGNMENT",
     "ARROW",
+    "QUESTION",
 
     "EQUAL",
     "NOTEQUAL",
+    "GTHAN",
+    "GETHAN",
+    "LTHAN",
+    "LETHAN",
+
+    "EOF"
+
 };
 
 /**
@@ -97,4 +139,4 @@ TokenList* lex(char* input);
 
 // Debugging function
 
-void _print_token(Token* token);
+void print_token(Token* token);

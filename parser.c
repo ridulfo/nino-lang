@@ -1,122 +1,210 @@
+#include "parser.h"
+
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
 #include "lexer.h"
 
-char* printing_header =
-    "@.int_str = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\"\n"
-    "declare i32 @printf(i8*, ...)\n\n";
-
-char* printing_function(char* identifier) {
-    char* output = malloc(100 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
+// Gets the next token and checks if it is of the expected type.
+void next_token(Token** current, enum TokenType type) {
+    (*current)++;
+    if ((*current)->type != type) {
+        printf("Expected token %s, got %s\n", TokenNames[type], TokenNames[(*current)->type]);
+        exit(1);
     }
-
-    sprintf(output,
-            "  \n"
-            "  %%fmt_val = load i32, i32* %%%s\n"
-            "  %%fmt = getelementptr inbounds [4 x i8], [4 x i8]* @.int_str, i32 0, i32 0\n"
-            "  call i32 (i8*, ...) @printf(i8* %%fmt, i32 %%fmt_val)\n\n",
-            identifier);
-
-    return output;
 }
 
-char* build_print(Token* token) {
-    // print x;
-    assert(token->type == TOKEN_PRINT);
-    token++;  // skip the PRINT token
-
-    assert(token->type == TOKEN_LPAREN);
-    token++;  // skip the SEPARATOR token
-
-    assert(token->type == TOKEN_IDENTIFIER);
-    char* identifier = token->text;
-    token++;  // consume the IDENTIFIER token
-
-    assert(token->type == TOKEN_RPAREN);
-    token++;  // skip the SEPARATOR token
-
-    assert(token->type == TOKEN_SEMICOLON);
-    token++;  // consume the END_STATEMENT token
-
-    char* output = malloc(100 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
-    }
-
-    return printing_function(identifier);
+void next_token_any(Token** current) {
+    (*current)++;
 }
 
-char* build_let(Token* token) {
-    // let x = 5;
-    assert(token->type == TOKEN_LET);
-    token++;  // skip the LET token
-
-    assert(token->type == TOKEN_IDENTIFIER);
-    char* identifier = token->text;
-    token++;  // consume the IDENTIFIER token
-
-    assert(token->type == TOKEN_ASSIGNMENT);
-    token++;  // skip the ASSIGNMENT token
-
-    assert(token->type == TOKEN_INT);
-    char* value = token->text;
-    token++;  // consume the value token
-
-    assert(token->type == TOKEN_SEMICOLON);
-    token++;  // consume the END_STATEMENT token
-
-    char* output = malloc(100 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
+Expression* parse_primary(Token** current) {
+    Expression* expr = malloc(sizeof(Expression));
+    switch ((*current)->type) {
+        case TOKEN_IDENTIFIER:
+            expr->type = AST_IDENTIFIER;
+            expr->data.Identifier.value = (*current)->text;
+            expr->data.Identifier.length = (*current)->length;
+            break;
+        case TOKEN_LITERAL_INT:
+            expr->type = AST_INTEGER_LITERAL;
+            expr->data.Literal.type_name = "i32";
+            expr->data.Literal.type_name_length = 3;
+            expr->data.Literal.value = (*current)->text;
+            expr->data.Literal.length = (*current)->length;
+            break;
+        // case TOKEN_LITERAL_FLOAT:
+        //     expr->type = AST_FLOAT_LITERAL;
+        //     break;
+        // case TOKEN_LITERAL_STRING:
+        //     expr->type = AST_STRING_LITERAL;
+        //     break;
+        // case TOKEN_LITERAL_ARRAY:
+        //     expr->type = AST_ARRAY_LITERAL;
+        //     break;
+        default:
+            printf("Unexpected primary token %s\n", TokenNames[(*current)->type]);
+            exit(1);
+            break;
     }
-
-    sprintf(output,
-            "  %%%s = alloca i32\n"
-            "  store i32 %s, i32* %%%s\n",
-            identifier, value, identifier);
-
-    return output;
+    next_token_any(current);
+    return expr;
 }
 
-char* parser(TokenList* tokens) {
-    char* output = malloc(1000 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
+Expression* parse_unary(Token** current) {
+    Expression* node = parse_primary(current);
+    return node;
+}
+Expression* parse_factor(Token** current) {
+    Expression* node = parse_unary(current);
+    return node;
+}
+Expression* parse_term(Token** current) {
+    Expression* node = parse_factor(current);
+
+    while ((*current)->type == TOKEN_ADD || (*current)->type == TOKEN_SUB) {
+        Token* operator= *current;
+        next_token_any(current);
+        Expression* right = parse_factor(current);
+        Expression* left = node;
+        node = malloc(sizeof(Expression));
+        node->type = AST_BINARY_OPERATION;
+        node->data.BinaryOperation.left = left;
+        node->data.BinaryOperation.right = right;
+        node->data.BinaryOperation.operator= operator->text;
+        node->data.BinaryOperation.operator_length = operator->length;
     }
-    char* header_main_block =
-        "define i32 @main() {\n"
-        "entry:\n";
+    return node;
+}
 
-    char* footer_main_block =
-        "  ret i32 0\n"
-        "}\n"
-        "\n";
+Expression* parse_comparison(Token** current) {
+    Expression* node = parse_term(current);
+    return node;
+}
 
-    strcat(output, printing_header);
-    strcat(output, header_main_block);
+Expression* parse_equality(Token** current) {
+    Expression* node = parse_comparison(current);
+    return node;
+}
 
-    for (size_t i = 0; i < tokens->length; i++) {
-        Token* current = &tokens->tokens[i];
-        if (current->type == TOKEN_LET) {
-            char* let_output = build_let(current);
-            strcat(output, let_output);
-            free(let_output);
-        } else if (current->type == TOKEN_PRINT) {
-            char* print_output = build_print(current);
-            strcat(output, print_output);
-            free(print_output);
+Expression* parse_expression(Token** current) {
+    Expression* node = parse_equality(current);
+    return node;
+}
+
+ASTNode* parse_declaration(Token** current) {
+    ASTNode* node = malloc(sizeof(ASTNode));
+    node->type = AST_DECLARATION;
+
+    next_token(current, TOKEN_IDENTIFIER);  // identifier
+
+    Declaration* declaration = malloc(sizeof(Declaration));
+    declaration->identifier = (*current)->text;
+    declaration->identifier_length = (*current)->length;
+
+    next_token(current, TOKEN_COLON);  // colon
+
+    next_token(current, TOKEN_TYPE);  // type
+    declaration->type = (*current)->text;
+    declaration->type_length = (*current)->length;
+
+    next_token(current, TOKEN_ASSIGNMENT);  // assignment
+
+    next_token_any(current);  // beginning of expression
+
+    declaration->expression = parse_expression(current);
+
+
+    node->data.Declaration = *declaration;
+
+    return node;
+}
+
+ASTNode* parse_print(Token** current) {
+    ASTNode* node = malloc(sizeof(ASTNode));
+    node->type = AST_PRINT;
+
+    next_token(current, TOKEN_LPAREN);  // (
+    next_token_any(current);  // beginning of expression
+
+    node->data.Print.expression = parse_expression(current);
+
+    next_token(current, TOKEN_SEMICOLON);  // ;
+
+    return node;
+}
+
+void rec_print_expr_tree(Expression* node, int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("%s\n", ASTNodeNames[node->type]);
+    if (node->type == AST_BINARY_OPERATION) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
         }
+        printf("Operator: %s\n", node->data.BinaryOperation.operator);
+        rec_print_expr_tree(node->data.BinaryOperation.left, depth + 1);
+        rec_print_expr_tree(node->data.BinaryOperation.right, depth + 1);
+    } else if (node->type == AST_INTEGER_LITERAL) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Value: %s\n", node->data.Literal.value);
+    } else if (node->type == AST_IDENTIFIER) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Value: %s\n", node->data.Identifier.value);
+    }
+}
+
+void rec_print_ast_tree(ASTNode* node, int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("%s\n", ASTNodeNames[node->type]);
+    if (node->type == AST_DECLARATION) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Identifier: %s\n", node->data.Declaration.identifier);
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Type: %s\n", node->data.Declaration.type);
+        rec_print_expr_tree(node->data.Declaration.expression, depth + 1);
+    }
+}
+
+ASTList* parse(TokenList* tokens) {
+    ASTNode** items = malloc(1000 * sizeof(ASTNode));
+    size_t items_length = 0;
+
+    Token* current = tokens->tokens;
+
+    while (current->type != TOKEN_EOF) {
+        if (current->type == TOKEN_LET) {
+            items[items_length++] = parse_declaration(&current);
+        } else if (current->type == TOKEN_PRINT) {
+            // TODO: Handle this as any other function
+            items[items_length++] = parse_print(&current);
+        } else {
+            printf("Unexpected token %s\n", TokenNames[current->type]);
+            exit(1);
+        }
+        current++;
+    }
+    printf("Abstract Syntax Tree:\n");
+    for (int i = 0; i < (int)items_length; i++) {
+        rec_print_ast_tree(items[i], 0);
+        printf("\n");
     }
 
-    strcat(output, footer_main_block);
+    ASTList* ast_list = malloc(sizeof(ASTList));
+    ast_list->length = items_length;
+    ast_list->items = items;
 
-    return output;
+    return ast_list;
 }
