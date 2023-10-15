@@ -1,9 +1,10 @@
 #pragma once
+
 #include <stdlib.h>
 
 #include "lexer.h"
 
-enum ASTNodeType {
+typedef enum ASTNodeType {
     AST_IDENTIFIER,
     AST_INTEGER_LITERAL,
     AST_FLOAT_LITERAL,
@@ -57,8 +58,7 @@ static char* ASTNodeNames[] = {
     "AST_PATTERN_MATCH",
     "AST_IMPORT",
     "AST_IMPORT_LIST",
-    "AST_PRINT"
-};
+    "AST_PRINT"};
 
 typedef struct Declaration {
     char* identifier;
@@ -76,7 +76,7 @@ typedef struct Print {
 } Print;
 
 typedef struct Literal {
-    enum ASTNodeType type;
+    ASTNodeType type;
     char* type_name;
     size_t type_name_length;
     char* value;
@@ -84,7 +84,7 @@ typedef struct Literal {
 } Literal;
 
 typedef struct Identifier {
-    enum ASTNodeType type;
+    ASTNodeType type;
     char* value;
     size_t length;
 } Identifier;
@@ -98,7 +98,7 @@ typedef struct BinaryOperation {
 } BinaryOperation;
 
 typedef struct Expression {
-    enum ASTNodeType type;
+    ASTNodeType type;
     union {
         struct Identifier Identifier;
         struct Literal Literal;
@@ -108,7 +108,7 @@ typedef struct Expression {
 } Expression;
 
 typedef struct ASTNode {
-    enum ASTNodeType type;
+    ASTNodeType type;
     union {
         struct Declaration Declaration;
         struct Print Print;

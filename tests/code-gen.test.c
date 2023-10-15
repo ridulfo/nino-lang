@@ -6,28 +6,18 @@
 #include "../parser.h"
 
 int main() {
-    char* input =
-        "let x: i32 = 2;"
-        " let y: i32 = 3;"
-        "let z: i32 = x + y;"
-        "print(z);";
-    printf("Input: %s\n", input);
-    printf("Lexing...\n");
-    TokenList* tokens = lex(input);
+    char input[1024];  // A buffer to store input
+    if (fgets(input, sizeof(input), stdin) != NULL) {
+        TokenList* tokens = lex(input);
 
-    for (size_t i = 0; i < tokens->length; i++) {
-        print_token(&tokens->tokens[i]);
+        ASTList* ast_list = parse(tokens);
+
+        char* code = code_gen(ast_list);
+
+        printf("%s\n", code);
+    } else {
+        printf("Error: Could not read input.\n");
     }
 
-    printf("Parsing...\n");
-    ASTList* ast_list = parse(tokens);
-
-    printf("Code Generation...\n");
-    char* code = code_gen(ast_list);
-    printf("Output:\n%s\n", code);
-
-    FILE* file = fopen("build/code.ll", "w");
-    fprintf(file, "%s", code);
-    fclose(file);
     return 0;
 }

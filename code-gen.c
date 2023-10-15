@@ -23,7 +23,7 @@ char* printing_header =
     "declare i32 @printf(i8*, ...)\n\n";
 
 char* printing_function(char* identifier) {
-    char* output = malloc(100 * sizeof(char));
+    char* output = malloc(1000 * sizeof(char));
     if (output == NULL) {
         printf("Error: Could not allocate memory for output string.\n");
         return NULL;
@@ -107,7 +107,7 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
 }
 
 char* build_print(Print* print) {
-    char* output = malloc(100 * sizeof(char));
+    char* output = malloc(1000 * sizeof(char));
     if (output == NULL) {
         printf("Error: Could not allocate memory for output string.\n");
         return NULL;
@@ -126,7 +126,7 @@ char* build_print(Print* print) {
 char* build_let(Declaration* declaration) {
     // let x = 5;
 
-    char* output = malloc(100 * sizeof(char));
+    char* output = malloc(1000 * sizeof(char));
     if (output == NULL) {
         printf("Error: Could not allocate memory for output string.\n");
         return NULL;

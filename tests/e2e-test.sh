@@ -1,11 +1,11 @@
 echo "Running e2e test"
 
 echo "Building parser"
-make test-parser
+make test-code-gen
 
 echo
 echo "Generating LLVM IR"
-echo "let x = 5; print(x);" | ./build/parser.test > build/program.ll
+echo "let x:i32 = 5; let y:i32 = 5; let z:i32 = x + y; print(z);" | ./build/code-gen.test > build/program.ll
 if [ "$DEBUG" = "1" ]; then
     cat build/program.ll
 fi
@@ -16,16 +16,18 @@ clang build/program.ll -o build/program
 
 echo
 echo "Running program..."
-./build/program > build/parser.test.out
-
-echo
-echo "Checking that the program exit code is 0"
-[ $? -eq 0 ] && echo "Test passed" || echo "Test failed"
+./build/program > build/code-gen.test.out
 
 echo
 echo "Program printed the following output:"
-cat build/parser.test.out
+cat build/code-gen.test.out
 
 echo
 echo "Checking that the program output is correct"
-grep -q "5" build/parser.test.out && echo "Test passed" || echo "Test failed"
+if grep -q "10" build/code-gen.test.out; then
+    echo "Test passed"
+    exit 0
+else
+    echo "Test failed"
+    exit 1
+fi
