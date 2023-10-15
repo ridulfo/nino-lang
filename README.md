@@ -18,19 +18,24 @@ It will be a functional programming language with a syntax similar to [rust](<ht
 It will not have a garbage collector (TBD 🤨).
 
 ## Current status
+
 - 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
+- 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
+
+```Rust
 
 ## Syntax (WIP)
 
-The syntax definition in [Backus-Naur form](https://en.wikipedia.org/wiki/Backus–Naur_form) can be found [here](docs/BNF.md).
+Grammar definition can be found in [here](docs/grammar.md).
 
 ### Currently supported
 
 ```Rust
 let x = 13;
 let y = 14;
+let z = x + y;
 
-print(y);
+print(z);
 ```
 
 **To run:**
@@ -128,14 +133,14 @@ fn rot = (x:i8, s:[i8]):[i8] =>
 ## Milestones
 
 - [x] Define complete syntax
-- [ ] Basic Lexer
-- [ ] Basic Parser
+- [x] Basic Lexer
+- [x] Basic Parser
 - [ ] built-in functions
-    - [ ] print
-    - [ ] pattern-matching
-    - [ ] map
-    - [ ] filter
-    - [ ] reduce
+  - [x] print
+  - [ ] pattern-matching
+  - [ ] map
+  - [ ] filter
+  - [ ] reduce
 - [ ] arrays, strings
 - [ ] self-host compiler
 - [ ] [**SOLVE ADVENT OF CODE**](https://time-since.nicolo.io/#/20231201-000000?title=Advent+of+code)
