@@ -71,6 +71,8 @@ typedef struct Declaration {
 
 typedef struct Literal {
     enum ASTNodeType type;
+    char* type_name;
+    size_t type_name_length;
     char* value;
     size_t length;
 } Literal;

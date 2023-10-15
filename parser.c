@@ -29,6 +29,8 @@ Expression* parse_primary(Token* current) {
             break;
         case TOKEN_LITERAL_INT:
             expr->type = AST_INTEGER_LITERAL;
+            expr->data.Literal.type_name = "i32";
+            expr->data.Literal.type_name_length = 3;
             expr->data.Literal.value = current->text;
             expr->data.Literal.length = current->length;
             break;
@@ -176,7 +178,9 @@ ASTList* parse(TokenList* tokens) {
         current++;
     }
     printf("Abstract Syntax Tree:\n");
-    rec_print_ast_tree(items[0], 0);
+    for (int i = 0; i < (int)items_length; i++) {
+        rec_print_ast_tree(items[i], 0);
+    }
 
     ASTList* ast_list = malloc(sizeof(ASTList));
     ast_list->length = items_length;
