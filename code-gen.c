@@ -29,7 +29,7 @@ char* printing_function(char* identifier) {
         return NULL;
     }
 
-    sprintf(output,
+    sprintf(output + strlen(output),
             "  \n"
             "  %%fmt_val = load i32, i32* %%%s\n"
             "  %%fmt = getelementptr inbounds [4 x i8], [4 x i8]* @.int_str, i32 0, i32 0\n"
@@ -49,7 +49,7 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
         char* type = expression->data.Literal.type_name;
         char* value = expression->data.Literal.value;
 
-        sprintf(output,
+        sprintf(output + strlen(output),
                 "  %%%s = alloca %s\n"
                 "  store %s %s, %s* %%%s\n\n",
                 identifier, type,
@@ -91,7 +91,7 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
         if (output == NULL) {
             printf("Error: Could not allocate memory for output string.\n");
         }
-        sprintf(output,
+        sprintf(output + strlen(output),
                 "  %%%s = load i32, i32* %%%s\n"
                 "  %%%s = load i32, i32* %%%s\n"
                 "  %%%s = %s i32 %%%s, %%%s\n"
@@ -102,6 +102,7 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
                 result_id, "add", left_load_id, right_load_id,
                 identifier, "i32",
                 "i32", result_id, "i32", identifier);
+        return identifier;
     }
     return NULL;
 }
@@ -120,7 +121,8 @@ char* build_print(Print* print) {
 
     char* load_id = build_expression(identifier, expression, output);
 
-    return printing_function(load_id);
+    strcat(output, printing_function(load_id));
+    return output;
 }
 
 char* build_let(Declaration* declaration) {
