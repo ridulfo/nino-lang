@@ -53,6 +53,35 @@ char* build_print(Token* token) {
     return printing_function(identifier);
 }
 
+// Generate variable names for temporary variables
+char* id_gen() {
+    static int id = 0;
+    char* output = malloc(100 * sizeof(char));
+    if (output == NULL) {
+        printf("Error: Could not allocate memory for output string.\n");
+        return NULL;
+    }
+    sprintf(output, "%%%d", id);
+    id++;
+    return output;
+}
+
+char* build_expression(Expression* expression, char* output) {
+    if (expression->type == AST_INTEGER_LITERAL) {
+        char* identifier = id_gen();
+        char* type = expression->data.Literal.type_name;
+        char* value = expression->data.Literal.value;
+
+        sprintf(output,
+                "  %s = alloca %s\n"
+                "  store %s %s, %s* %s\n\n",
+                identifier, type, type, value, type, identifier);
+        return output;
+    }
+    
+    return NULL;
+}
+
 char* build_let(Declaration* declaration) {
     // let x = 5;
 
@@ -62,16 +91,8 @@ char* build_let(Declaration* declaration) {
         return NULL;
     }
 
-
-    char* identifier = declaration->identifier;
-    char* value = declaration->expression->data.Literal.value;
-    char* type = declaration->type;
-    
-
-    sprintf(output,
-            "  %%%s = alloca %s\n"
-            "  store %s %s, %s* %%%s\n",
-            identifier, type, type, value, type, identifier);
+    Expression* expression = declaration->expression;
+    build_expression(expression, output);
 
     return output;
 }
@@ -84,7 +105,7 @@ char* code_gen(ASTList* ast_list) {
     }
     char* header_main_block =
         "define i32 @main() {\n"
-        "entry:\n";
+        "entry:\n\n";
 
     char* footer_main_block =
         "  ret i32 0\n"
@@ -94,10 +115,13 @@ char* code_gen(ASTList* ast_list) {
     strcat(output, printing_header);
     strcat(output, header_main_block);
 
-    ASTNode* node = ast_list->items[0];
-
-    strcat(output, build_let(&node->data.Declaration));
-
+    for (int i = 0; i < (int)ast_list->length; i++) {
+        ASTNode* node = ast_list->items[i];
+        if (node->type == AST_DECLARATION) {
+            strcat(output, build_let(&node->data.Declaration));
+        }
+    }
+    
     strcat(output, footer_main_block);
 
     return output;

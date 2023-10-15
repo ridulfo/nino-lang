@@ -6,7 +6,7 @@
 #include "../parser.h"
 
 int main() {
-    char* input = "let x: i32 = 2";
+    char* input = "let x: i32 = 2; let y: i32 = 3;";
     printf("Input: %s\n", input);
     printf("Lexing...\n");
     TokenList* tokens = lex(input);
