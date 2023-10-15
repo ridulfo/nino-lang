@@ -29,12 +29,20 @@ char* printing_function(char* identifier) {
         return NULL;
     }
 
+    char* fmt_val_id = malloc(100 * sizeof(char));
+    strcpy(fmt_val_id, "fmt_val");
+    fmt_val_id = strcat(fmt_val_id, id_gen());
+
+    char* fmt_id = malloc(100 * sizeof(char));
+    strcpy(fmt_id, "fmt");
+    fmt_id = strcat(fmt_id, id_gen());
+
     sprintf(output + strlen(output),
             "  \n"
-            "  %%fmt_val = load i32, i32* %%%s\n"
-            "  %%fmt = getelementptr inbounds [4 x i8], [4 x i8]* @.int_str, i32 0, i32 0\n"
-            "  call i32 (i8*, ...) @printf(i8* %%fmt, i32 %%fmt_val)\n\n",
-            identifier);
+            "  %%%s = load i32, i32* %%%s\n"
+            "  %%%s = getelementptr inbounds [4 x i8], [4 x i8]* @.int_str, i32 0, i32 0\n"
+            "  call i32 (i8*, ...) @printf(i8* %%%s, i32 %%%s)\n\n",
+            fmt_val_id, identifier, fmt_id, fmt_id, fmt_val_id);
 
     return output;
 }
@@ -59,7 +67,6 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
 
     if (expression->type == AST_IDENTIFIER) {
         char* identifier = expression->data.Identifier.value;
-        strcat(output, identifier);
         return identifier;
     }
 

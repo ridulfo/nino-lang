@@ -22,8 +22,6 @@ It will not have a garbage collector (TBD 🤨).
 - 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
 - 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
 
-```Rust
-
 ## Syntax (WIP)
 
 Grammar definition can be found in [here](docs/grammar.md).
@@ -31,11 +29,12 @@ Grammar definition can be found in [here](docs/grammar.md).
 ### Currently supported
 
 ```Rust
-let x = 13;
-let y = 14;
-let z = x + y;
+let x:i32 = 13;
+let y:i32 = 14;
+let z:i32 = x + y;
 
 print(z);
+print(13+14)
 ```
 
 **To run:**
