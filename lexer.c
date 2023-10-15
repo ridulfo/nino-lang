@@ -210,11 +210,12 @@ TokenList* lex(char* input) {
         }
     }
 
-    Token* usedTokens = realloc(tokens, tokenCount * sizeof(Token));
+    Token* usedTokens = realloc(tokens, tokenCount * sizeof(Token) + 1);
     if (usedTokens == NULL) {
         printf("Memory allocation failed\n");
         exit(1);
     }
+    usedTokens[tokenCount] = (Token){TOKEN_EOF, "", 0};
 
     TokenList* tokenList = malloc(sizeof(TokenList));
     *tokenList = (TokenList){usedTokens, tokenCount};

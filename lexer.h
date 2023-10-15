@@ -56,6 +56,9 @@ enum TokenType {
     TOKEN_GETHAN,
     TOKEN_LTHAN,
     TOKEN_LETHAN,
+
+    // end of file
+    TOKEN_EOF
 };
 
 /**
@@ -104,6 +107,8 @@ static char** TokenNames = (char*[]){
     "GETHAN",
     "LTHAN",
     "LETHAN",
+
+    "EOF"
 
 };
 

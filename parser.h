@@ -27,7 +27,9 @@ enum ASTNodeType {
     AST_PATTERN_MATCHES,
     AST_PATTERN_MATCH,
     AST_IMPORT,
-    AST_IMPORT_LIST
+    AST_IMPORT_LIST,
+    AST_PRINT,
+
 } ASTNodeType;
 
 static char* ASTNodeNames[] = {
@@ -55,7 +57,7 @@ static char* ASTNodeNames[] = {
     "AST_PATTERN_MATCH",
     "AST_IMPORT",
     "AST_IMPORT_LIST",
-
+    "AST_PRINT"
 };
 
 typedef struct Declaration {
@@ -68,6 +70,10 @@ typedef struct Declaration {
     struct Expression* expression;
 
 } Declaration;
+
+typedef struct Print {
+    struct Expression* expression;
+} Print;
 
 typedef struct Literal {
     enum ASTNodeType type;
@@ -105,6 +111,7 @@ typedef struct ASTNode {
     enum ASTNodeType type;
     union {
         struct Declaration Declaration;
+        struct Print Print;
     } data;
 
 } ASTNode;
