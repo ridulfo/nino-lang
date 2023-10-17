@@ -10,7 +10,7 @@
 void next_token(Token** current, enum TokenType type) {
     (*current)++;
     if ((*current)->type != type) {
-        printf("Expected token %s, got %s\n", TokenNames[type], TokenNames[(*current)->type]);
+        printf("Parser Error - Expected token %s, got %s\n", TokenNames[type], TokenNames[(*current)->type]);
         exit(1);
     }
 }
@@ -58,6 +58,20 @@ Expression* parse_unary(Token** current) {
 }
 Expression* parse_factor(Token** current) {
     Expression* node = parse_unary(current);
+
+    while ((*current)->type == TOKEN_MUL || (*current)->type == TOKEN_DIV) {
+        Token* operator= *current;
+        next_token_any(current);
+        Expression* right = parse_unary(current);
+        Expression* left = node;
+        node = malloc(sizeof(Expression));
+        node->type = AST_BINARY_OPERATION;
+        node->data.BinaryOperation.left = left;
+        node->data.BinaryOperation.right = right;
+        node->data.BinaryOperation.operator= operator->text;
+        node->data.BinaryOperation.operator_length = operator->length;
+    }
+
     return node;
 }
 Expression* parse_term(Token** current) {

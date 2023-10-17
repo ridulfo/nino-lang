@@ -104,7 +104,7 @@ Token* parse_type(char** input) {
 TokenList* lex(char* input) {
     Token* tokens = malloc(1000 * sizeof(Token));
     if (tokens == NULL) {
-        printf("Memory allocation failed\n");
+        printf("Lexer Error - Memory allocation failed\n");
         exit(1);
     }
 
@@ -205,7 +205,7 @@ TokenList* lex(char* input) {
         } else {
             if (*current == '\0') break;
 
-            printf("Unknown character: %c. ASCII: %d.\n", *current, *current);
+            printf("Lexer Error - Unknown character: %c. ASCII: %d.\n", *current, *current);
             exit(1);
         }
     }

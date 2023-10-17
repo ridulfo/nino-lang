@@ -95,9 +95,21 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
         strcpy(result_id, identifier);
         result_id = strcat(result_id, id_gen());
 
-        if (output == NULL) {
-            printf("Error: Could not allocate memory for output string.\n");
+        char* operator = expression->data.BinaryOperation.operator;
+        char* operation;
+        if(strcmp(operator, "+") == 0) {
+            operation = "add";
+        } else if(strcmp(operator, "-") == 0) {
+            operation = "sub";
+        } else if(strcmp(operator, "*") == 0) {
+            operation = "mul";
+        } else if(strcmp(operator, "/") == 0) {
+            operation = "sdiv";
+        } else {
+            printf("Error: Unknown operator %s\n", operator);
+            return NULL;
         }
+
         sprintf(output + strlen(output),
                 "  %%%s = load i32, i32* %%%s\n"
                 "  %%%s = load i32, i32* %%%s\n"
@@ -106,7 +118,7 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
                 "  store %s %%%s, %s* %%%s\n\n",
                 left_load_id, left_ptr_id,
                 right_load_id, right_ptr_id,
-                result_id, "add", left_load_id, right_load_id,
+                result_id, operation, left_load_id, right_load_id,
                 identifier, "i32",
                 "i32", result_id, "i32", identifier);
         return identifier;
