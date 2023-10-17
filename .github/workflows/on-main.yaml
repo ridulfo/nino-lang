@@ -25,3 +25,6 @@ jobs:
 
     - name: Run parser tests
       run: bash tests/e2e-test.sh
+    
+    - name: Bulid compiler
+      run: make

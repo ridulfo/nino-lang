@@ -5,15 +5,15 @@
 
 [![Run Tests](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml/badge.svg)](https://github.com/ridulfo/nino-lang/actions/workflows/on-main.yaml)
 
-**Tiny speedy self-hosted compiled functional programming language**
+**Tiny - speedy - self-hosted - compiled - functional**
 
 Like the [Whippet](https://en.wikipedia.org/wiki/Whippet), this language [will have] the highest running speed of any [language] of its [size].
 
 The goal is to create a small language that only has the essential features needed to be able to do pretty much anything. No bloat. This will make [self-hosting](<https://en.wikipedia.org/wiki/Self-hosting_(compilers)>) easier and faster.
 
-The compiler will transpile source code into [LLVM IR](https://en.wikipedia.org/wiki/LLVM#Intermediate_representation) and then use [Clang](https://en.wikipedia.org/wiki/Clang) to compile it to native code. This will allow us to use the LLVM optimizer and get the best performance possible. Probably in the realm of C/C++/rust.
+The [compiler](ninoc.c) will transpile source code into [LLVM IR](https://en.wikipedia.org/wiki/LLVM#Intermediate_representation) and then use [Clang](https://en.wikipedia.org/wiki/Clang) to compile it to machine code. This will allow us to use the LLVM optimizer and get the best performance possible. Probably in the realm of C/C++/rust.
 
-It will be a functional programming language with a syntax similar to [rust](<https://en.wikipedia.org/wiki/Rust_(programming_language)#Syntax_and_features>) and [oCaml](https://en.wikipedia.org/wiki/OCaml#Code_examples). The native types will be those of rust, and the level of side-effect pedanticness will be like oCaml. That is, side effects such as printing will not have to be wrapped in monads. There will be no member functions and variables.
+Nino-lang is a bare minimum yet complete functional programming language with a syntax similar to [rust](<https://en.wikipedia.org/wiki/Rust_(programming_language)#Syntax_and_features>) and [OCaml](https://en.wikipedia.org/wiki/OCaml#Code_examples). The native types are those of rust, and the level of side-effect pedanticness will be like oCaml. That is, side effects such as printing will not have to be wrapped in monads.
 
 It will not have a garbage collector (TBD 🤨).
 
@@ -21,12 +21,35 @@ It will not have a garbage collector (TBD 🤨).
 
 - 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
 - 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
+- 2023-10-17: Created compiler program
 
-## Syntax (WIP)
+## Quick start
+
+**Compile the compiler**
+
+```Bash
+make
+```
+
+**Compile an example program**
+
+```Bash
+./ninoc examples/print-sum.ni
+```
+
+**Run the example program**
+
+```Bash
+./print-sum
+```
+
+## Syntax
 
 Grammar definition can be found in [here](docs/grammar.md).
 
 ### Currently supported
+
+Check the [examples](examples) directory for the currently supported syntax.
 
 ```Rust
 let x:i32 = 13;
@@ -36,13 +59,6 @@ let z:i32 = x + y;
 print(z);
 print(13+14)
 ```
-
-**To run:**
-
-1. `make parser`
-1. `./build/parser`
-1. `clang output.ll`
-1. `./a.out`
 
 ### In the future...
 
@@ -117,6 +133,12 @@ fn is_prime = (x:i32):bool =>
 ```
 
 #### Built-in functions
+
+**print**
+
+```Rust
+print(1+1)
+```
 
 **map**
 

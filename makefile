@@ -2,8 +2,9 @@
 CC = clang
 
 # Compiler flags with all warnings
-CFLAGS = -Wall -Wextra -Werror -std=c11 -g -O0
+CFLAGS = -Wall -Wextra -Werror -std=c11
 
+all: ninoc
 
 build/lexer.o: lexer.c lexer.h
 	$(CC) $(CFLAGS) -o build/lexer.o -c lexer.c
@@ -13,6 +14,9 @@ build/parser.o: parser.c
 
 build/code-gen.o: code-gen.c 
 	$(CC) $(CFLAGS) -o build/code-gen.o -c code-gen.c
+
+ninoc: ninoc.c build/code-gen.o build/parser.o build/lexer.o
+	$(CC) $(CFLAGS) -o ninoc ninoc.c build/code-gen.o build/parser.o build/lexer.o
 
 build/lexer.test.o: build/lexer.o tests/lexer.test.c
 	$(CC) $(CFLAGS) -o build/lexer.test.o -c tests/lexer.test.c	
@@ -29,4 +33,5 @@ test-code-gen: build/code-gen.o build/parser.o build/lexer.o
 
 clean:
 	rm -r build/*
+	rm ninoc
 	
