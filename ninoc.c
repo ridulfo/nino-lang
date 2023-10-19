@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #include "code-gen.h"
 #include "lexer.h"
@@ -35,18 +34,18 @@ void write_file(char* file_name, char* content) {
 }
 
 void compile(char* code, char* output_file_name) {
-    struct stat st = {0};
-    if (stat("build", &st) == -1) {
-        mkdir("build", 0700);
-    }
-
     char* build_file_name = "build/build.ll";
     write_file(build_file_name, code);
 
     char* command = malloc(strlen(build_file_name) + strlen(output_file_name) + 100);
     sprintf(command, "clang -o %s %s -Wno-override-module", output_file_name, build_file_name);
 
-    system(command);
+    int exit_status = system(command);
+
+    if (exit_status != 0) {
+        printf("Compilation failed.\n");
+        exit(1);
+    }
 }
 
 char* get_file_name_without_extension(char* file_path) {
@@ -69,24 +68,35 @@ char* get_file_name_without_extension(char* file_path) {
 }
 
 int main(int argc, char* argv[]) {
-    assert(argc > 1 && "No source file provided.");
     char* source_file_name = argv[1];
     char* destination_file_name = malloc(100);
-    if (argc == 1) {
-        printf("Usage: ninoc <source file> [destination file]\n");
-    } else if (argc > 2) {
-        strcpy(destination_file_name, argv[2]);
-    } else {
-        strcpy(destination_file_name, get_file_name_without_extension(source_file_name));
+    switch (argc) {
+        case 1:
+            printf("Usage: ninoc <source file> [destination file]\n");
+            exit(1);
+            break;
+        case 2:
+            strcpy(destination_file_name, get_file_name_without_extension(source_file_name));
+            break;
+        default:
+            strcpy(destination_file_name, argv[2]);
+            break;
     }
 
+    printf("Loading source file...\n");
     char* source_code = load_file(source_file_name);
 
+    printf("Lexing...\n");
     TokenList* tokens = lex(source_code);
 
+    printf("Parsing...\n");
     ASTList* ast_list = parse(tokens);
 
+    printf("Generating code...\n");
     char* llvm_ir = code_gen(ast_list);
-
+    printf("Generated code:\n%s\n\n", llvm_ir);
+    printf("Compiling...\n");
     compile(llvm_ir, destination_file_name);
+
+    printf("Done.\n");
 }

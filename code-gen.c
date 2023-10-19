@@ -5,37 +5,23 @@
 #include "lexer.h"
 #include "parser.h"
 
-// Generate variable names for temporary variables
-char* id_gen() {
-    static int id = 0;
-    char* output = malloc(100 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
-    }
-    sprintf(output, "%d", id);
-    id++;
-    return output;
-}
-
 char* printing_header =
     "@.int_str = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\"\n"
     "declare i32 @printf(i8*, ...)\n\n";
 
-char* printing_function(char* identifier) {
-    char* output = malloc(1000 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
-    }
+/** Appends a unique id to the identifier */
+void append_id(char* identifier) {
+    static int id = 0;
+    sprintf(identifier + strlen(identifier), "%d", id);
+    id++;
+}
 
-    char* fmt_val_id = malloc(100 * sizeof(char));
-    strcpy(fmt_val_id, "fmt_val");
-    fmt_val_id = strcat(fmt_val_id, id_gen());
+void printing_function(char* identifier, char* output) {
+    char fmt_val_id[100] = "fmt_val";
+    append_id(fmt_val_id);
 
-    char* fmt_id = malloc(100 * sizeof(char));
-    strcpy(fmt_id, "fmt");
-    fmt_id = strcat(fmt_id, id_gen());
+    char fmt_id[100] = "fmt";
+    append_id(fmt_id);
 
     sprintf(output + strlen(output),
             "  \n"
@@ -43,8 +29,6 @@ char* printing_function(char* identifier) {
             "  %%%s = getelementptr inbounds [4 x i8], [4 x i8]* @.int_str, i32 0, i32 0\n"
             "  call i32 (i8*, ...) @printf(i8* %%%s, i32 %%%s)\n\n",
             fmt_val_id, identifier, fmt_id, fmt_id, fmt_val_id);
-
-    return output;
 }
 
 /**
@@ -72,38 +56,38 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
 
     if (expression->type == AST_BINARY_OPERATION) {
         // The id to be used for the left and right expressions if they do not return a identifier
-        char* left_expr_id = malloc(100 * sizeof(char));
+        char left_expr_id[100] = {0};
         strcpy(left_expr_id, identifier);
-        left_expr_id = strcat(left_expr_id, id_gen());
+        append_id(left_expr_id);
 
         char* right_expr_id = malloc(100 * sizeof(char));
         strcpy(right_expr_id, identifier);
-        right_expr_id = strcat(right_expr_id, id_gen());
+        append_id(right_expr_id);
 
         char* left_ptr_id = build_expression(left_expr_id, expression->data.BinaryOperation.left, output);
         char* right_ptr_id = build_expression(right_expr_id, expression->data.BinaryOperation.right, output);
 
         char* left_load_id = malloc(100 * sizeof(char));
         strcpy(left_load_id, identifier);
-        left_load_id = strcat(left_load_id, id_gen());
+        append_id(left_load_id);
 
         char* right_load_id = malloc(100 * sizeof(char));
         strcpy(right_load_id, identifier);
-        right_load_id = strcat(right_load_id, id_gen());
+        append_id(right_load_id);
 
         char* result_id = malloc(100 * sizeof(char));
         strcpy(result_id, identifier);
-        result_id = strcat(result_id, id_gen());
+        append_id(result_id);
 
-        char* operator = expression->data.BinaryOperation.operator;
+        char* operator= expression->data.BinaryOperation.operator;
         char* operation;
-        if(strcmp(operator, "+") == 0) {
+        if (strcmp(operator, "+") == 0) {
             operation = "add";
-        } else if(strcmp(operator, "-") == 0) {
+        } else if (strcmp(operator, "-") == 0) {
             operation = "sub";
-        } else if(strcmp(operator, "*") == 0) {
+        } else if (strcmp(operator, "*") == 0) {
             operation = "mul";
-        } else if(strcmp(operator, "/") == 0) {
+        } else if (strcmp(operator, "/") == 0) {
             operation = "sdiv";
         } else {
             printf("Error: Unknown operator %s\n", operator);
@@ -126,41 +110,24 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
     return NULL;
 }
 
-char* build_print(Print* print) {
-    char* output = malloc(1000 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
-    }
-
+void build_print(Print* print, char* output) {
     Expression* expression = print->expression;
     char* identifier = malloc(100 * sizeof(char));
     strcpy(identifier, "print");
-    identifier = strcat(identifier, id_gen());
+    append_id(identifier);
 
     char* load_id = build_expression(identifier, expression, output);
 
-    strcat(output, printing_function(load_id));
-    return output;
+    printing_function(load_id, output);
 }
 
-char* build_let(Declaration* declaration) {
-    // let x = 5;
-
-    char* output = malloc(1000 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
-    }
-
+void build_let(Declaration* declaration, char* output) {
     Expression* expression = declaration->expression;
     build_expression(declaration->identifier, expression, output);
-
-    return output;
 }
 
 char* code_gen(ASTList* ast_list) {
-    char* output = malloc(1000 * sizeof(char));
+    char* output = malloc(10000 * sizeof(char));
     if (output == NULL) {
         printf("Error: Could not allocate memory for output string.\n");
         return NULL;
@@ -180,10 +147,10 @@ char* code_gen(ASTList* ast_list) {
     for (int i = 0; i < (int)ast_list->length; i++) {
         ASTNode* node = ast_list->items[i];
         if (node->type == AST_DECLARATION) {
-            strcat(output, build_let(&node->data.Declaration));
+            build_let(&node->data.Declaration, output);
         }
         if (node->type == AST_PRINT) {
-            strcat(output, build_print(&node->data.Print));
+            build_print(&node->data.Print, output);
         }
     }
 

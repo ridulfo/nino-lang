@@ -1,22 +1,21 @@
+set -o errexit   # abort on nonzero exitstatus
+set -o nounset   # abort on unbound variable
+set -o pipefail  # don't hide errors within pipes
+
 echo "Running e2e test"
 
-echo "Building parser"
-make test-code-gen
+echo
+echo "Building compiler"
+make ninoc
 
 echo
-echo "Generating LLVM IR"
-echo "let x:i32 = 5; let y:i32 = 5; let z:i32 = x + y; print(z);" | ./build/code-gen.test > build/program.ll
-if [ "$DEBUG" = "1" ]; then
-    cat build/program.ll
-fi
-
-echo
-echo "Compiling LLVM IR to executable"
-clang build/program.ll -o build/program
+echo "Compiling source code to LLVM IR"
+echo "let x:i32 = 5; let y:i32 = 5; let z:i32 = x + y; print(z);" > "build/e2e.ni"
+./ninoc build/e2e.ni build/e2e
 
 echo
 echo "Running program..."
-./build/program > build/code-gen.test.out
+./build/e2e > build/code-gen.test.out
 
 echo
 echo "Program printed the following output:"

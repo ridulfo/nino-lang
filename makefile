@@ -34,4 +34,5 @@ test-code-gen: build/code-gen.o build/parser.o build/lexer.o
 clean:
 	rm -r build/*
 	rm ninoc
+	rm -r *.dSYM
 	
