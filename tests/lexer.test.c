@@ -38,9 +38,10 @@ void test_variable_assignment() {
         {TOKEN_ASSIGNMENT, "=", 1},
         {TOKEN_LITERAL_INT, "55", 2},
         {TOKEN_SEMICOLON, ";", 1},
+        {TOKEN_EOF, "", 0},
     };
 
-    expected->length = 7;
+    expected->length = 8;
     expected->tokens = malloc(expected->length * sizeof(Token));
     memcpy(expected->tokens, expected_tokens, expected->length * sizeof(Token));
 
@@ -49,7 +50,11 @@ void test_variable_assignment() {
     for (size_t i = 0; i < tokens->length; i++) {
         print_token(&tokens->tokens[i]);
     }
-    assert(tokens->length == expected->length);
+
+    if (tokens->length != expected->length) {
+        printf("Expected length: %zu, Actual length: %zu\n", expected->length, tokens->length);
+        assert(0);
+    }
 
     for (size_t i = 0; i < tokens->length; i++) {
         compare_tokens(&expected->tokens[i], &tokens->tokens[i]);
@@ -61,7 +66,7 @@ void test_variable_assignment() {
 void test_function_declaration() {
     printf("Testing function declaration...\n");
     char* input =
-        "fn is_prime = (x:i32):bool =>"
+        "let is_prime:fn = (x:i32):bool =>"
         "| let sqrt_x:f32 = sqrt(x);"
         "| let sqrt_x_int:i32 = floor(sqrt_x);"
         "=> true ? {"
@@ -73,8 +78,10 @@ void test_function_declaration() {
     TokenList* expected = malloc(sizeof(TokenList));
 
     Token expected_tokens[] = {
-        {TOKEN_FN, "fn", 2},
+        {TOKEN_LET, "let", 3},
         {TOKEN_IDENTIFIER, "is_prime", 8},
+        {TOKEN_COLON, ":", 1},
+        {TOKEN_TYPE, "fn", 2},
         {TOKEN_ASSIGNMENT, "=", 1},
         {TOKEN_LPAREN, "(", 1},
         {TOKEN_IDENTIFIER, "x", 1},
@@ -142,9 +149,10 @@ void test_function_declaration() {
         {TOKEN_RPAREN, ")", 1},
         {TOKEN_RBRACE, "}", 1},
         {TOKEN_SEMICOLON, ";", 1},
+        {TOKEN_EOF, "", 0},
     };
 
-    expected->length = 69;
+    expected->length = 72;
     expected->tokens = malloc(expected->length * sizeof(Token));
     memcpy(expected->tokens, expected_tokens, expected->length * sizeof(Token));
 

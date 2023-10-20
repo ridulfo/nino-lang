@@ -2,7 +2,7 @@
 CC = clang
 
 # Compiler flags with all warnings
-CFLAGS = -Wall -Wextra -Werror -std=c11
+CFLAGS = -Wall -Wextra -Werror -std=c11 -g
 
 all: ninoc
 

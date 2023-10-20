@@ -5,6 +5,8 @@
 #include "lexer.h"
 #include "parser.h"
 
+char functions[1000] = {0};
+
 char* printing_header =
     "@.int_str = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\"\n"
     "declare i32 @printf(i8*, ...)\n\n";
@@ -35,6 +37,10 @@ void printing_function(char* identifier, char* output) {
  * @brief Build an expression
  *
  * @param identifier the identifier given by the parent expression
+ * @param expression the expression to build
+ * @param output the string to append the generated code to
+ *
+ * @return the identifier of the expression
  */
 char* build_expression(char* identifier, Expression* expression, char* output) {
     if (expression->type == AST_INTEGER_LITERAL) {
@@ -107,6 +113,19 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
                 "i32", result_id, "i32", identifier);
         return identifier;
     }
+
+    if (expression->type == AST_FUNCTION) {
+        // "define i32 @x(type1 arg1, type2 arg2){\n"
+        // "   ret i32 arg\n"
+        // "}\n\n";
+        sprintf(functions + strlen(functions),
+                "define i32 @%s(){\n"
+                "   ret i32 1\n"
+                "}\n\n",
+                identifier);
+        return identifier;
+    }
+
     return NULL;
 }
 
@@ -127,34 +146,31 @@ void build_let(Declaration* declaration, char* output) {
 }
 
 char* code_gen(ASTList* ast_list) {
-    char* output = malloc(10000 * sizeof(char));
-    if (output == NULL) {
-        printf("Error: Could not allocate memory for output string.\n");
-        return NULL;
-    }
-    char* header_main_block =
-        "define i32 @main() {\n"
-        "entry:\n\n";
+    strcat(functions, printing_header);
 
-    char* footer_main_block =
-        "  ret i32 0\n"
-        "}\n"
-        "\n";
-
-    strcat(output, printing_header);
-    strcat(output, header_main_block);
+    char* main = malloc(10000 * sizeof(char));
+    strcat(main,
+           "define i32 @main() {\n"
+           "entry:\n\n");
 
     for (int i = 0; i < (int)ast_list->length; i++) {
         ASTNode* node = ast_list->items[i];
         if (node->type == AST_DECLARATION) {
-            build_let(&node->data.Declaration, output);
+            build_let(&node->data.Declaration, main);
         }
         if (node->type == AST_PRINT) {
-            build_print(&node->data.Print, output);
+            build_print(&node->data.Print, main);
         }
     }
 
-    strcat(output, footer_main_block);
+    strcat(main,
+           "  ret i32 0\n"
+           "}\n"
+           "\n");
 
-    return output;
+    char* code = malloc(10000 * sizeof(char));
+    strcat(code, functions);
+    strcat(code, main);
+
+    return code;
 }

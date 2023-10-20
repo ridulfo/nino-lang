@@ -42,8 +42,6 @@ Token* parse_identifier(char** input) {
     // check if the word is a keyword
     if (strcmp(token->text, "let") == 0) {
         token->type = TOKEN_LET;
-    } else if (strcmp(token->text, "fn") == 0) {
-        token->type = TOKEN_FN;
     } else if (strcmp(token->text, "print") == 0) {
         token->type = TOKEN_PRINT;
     } else if (strcmp(token->text, "mod") == 0) {
@@ -210,7 +208,7 @@ TokenList* lex(char* input) {
         }
     }
 
-    tokens[tokenCount] = (Token){TOKEN_EOF, "", 0};
+    tokens[tokenCount++] = *create_token(TOKEN_EOF, current, 0);
 
     TokenList* tokenList = malloc(sizeof(TokenList));
     *tokenList = (TokenList){tokens, tokenCount};

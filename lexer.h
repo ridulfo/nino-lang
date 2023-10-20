@@ -8,7 +8,6 @@
 enum TokenType {
     // keywords
     TOKEN_LET,
-    TOKEN_FN,
 
     // types and values
     TOKEN_TYPE,
@@ -16,6 +15,7 @@ enum TokenType {
     TOKEN_LITERAL_FLOAT,
     TOKEN_LITERAL_STRING,
     TOKEN_LITERAL_BOOL,
+    TOKEN_FN,
 
     // builtins
     TOKEN_PRINT,
@@ -66,13 +66,13 @@ enum TokenType {
  */
 static char** TokenNames = (char*[]){
     "LET",
-    "FN",
 
     "TYPE",
     "LITERAL_INT",
     "LITERAL_FLOAT",
     "LITERAL_STRING",
     "LITERAL_BOOL",
+    "FN",
 
     "PRINT",
     "MOD",

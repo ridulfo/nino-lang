@@ -6,17 +6,60 @@
 
 #include "lexer.h"
 
+void next_token_any(Token** current) {
+    (*current)++;
+    print_token(*current);
+}
+
 // Gets the next token and checks if it is of the expected type.
 void next_token(Token** current, enum TokenType type) {
-    (*current)++;
+    next_token_any(current);
     if ((*current)->type != type) {
         printf("Parser Error - Expected token %s, got %s\n", TokenNames[type], TokenNames[(*current)->type]);
         exit(1);
     }
 }
 
-void next_token_any(Token** current) {
-    (*current)++;
+enum TokenType peek_token(Token** current, size_t offset) {
+    return ((*current) + offset)->type;
+}
+
+Expression* parse_expression(Token** current);
+
+Expression* parse_function(Token** current) {
+    Expression* node = malloc(sizeof(Expression));
+    node->type = AST_FUNCTION;
+    Function* function = malloc(sizeof(Function));
+    FunctionParameter* parameters = malloc(10 * sizeof(FunctionParameter));  // Max number of function parameters
+    function->parameters = parameters;
+
+    next_token(current, TOKEN_IDENTIFIER);
+    while ((*current)->type != TOKEN_RPAREN) {
+        FunctionParameter* parameter = &parameters[function->num_parameters];
+        parameter->identifier = (*current)->text;
+        parameter->identifier_length = (*current)->length;
+        next_token(current, TOKEN_COLON);
+        next_token(current, TOKEN_TYPE);
+        parameter->type = (*current)->text;
+        parameter->type_length = (*current)->length;
+        function->num_parameters++;
+        next_token_any(current);
+    }
+
+    next_token(current, TOKEN_COLON);
+    next_token(current, TOKEN_TYPE);
+
+    function->return_type = (*current)->text;
+    function->return_type_length = (*current)->length;
+
+    next_token(current, TOKEN_ARROW);
+    next_token_any(current);
+
+    function->expression = parse_expression(current);
+
+    node->data.Function = *function;
+
+    return node;
 }
 
 Expression* parse_primary(Token** current) {
@@ -34,15 +77,11 @@ Expression* parse_primary(Token** current) {
             expr->data.Literal.value = (*current)->text;
             expr->data.Literal.length = (*current)->length;
             break;
-        // case TOKEN_LITERAL_FLOAT:
-        //     expr->type = AST_FLOAT_LITERAL;
-        //     break;
-        // case TOKEN_LITERAL_STRING:
-        //     expr->type = AST_STRING_LITERAL;
-        //     break;
-        // case TOKEN_LITERAL_ARRAY:
-        //     expr->type = AST_ARRAY_LITERAL;
-        //     break;
+        case TOKEN_LPAREN:
+            if (peek_token(current, 1) == TOKEN_IDENTIFIER && peek_token(current, 2) == TOKEN_COLON && peek_token(current, 3) == TOKEN_TYPE) {
+                expr = parse_function(current);
+            }
+            break;
         default:
             printf("Unexpected primary token %s\n", TokenNames[(*current)->type]);
             exit(1);
@@ -60,7 +99,7 @@ Expression* parse_factor(Token** current) {
     Expression* node = parse_unary(current);
 
     while ((*current)->type == TOKEN_MUL || (*current)->type == TOKEN_DIV) {
-        Token* operator= *current;
+        Token* operator= * current;
         next_token_any(current);
         Expression* right = parse_unary(current);
         Expression* left = node;
@@ -78,7 +117,7 @@ Expression* parse_term(Token** current) {
     Expression* node = parse_factor(current);
 
     while ((*current)->type == TOKEN_ADD || (*current)->type == TOKEN_SUB) {
-        Token* operator= *current;
+        Token* operator= * current;
         next_token_any(current);
         Expression* right = parse_factor(current);
         Expression* left = node;
@@ -110,7 +149,6 @@ Expression* parse_expression(Token** current) {
 ASTNode* parse_declaration(Token** current) {
     ASTNode* node = malloc(sizeof(ASTNode));
     node->type = AST_DECLARATION;
-
     next_token(current, TOKEN_IDENTIFIER);  // identifier
 
     Declaration* declaration = malloc(sizeof(Declaration));
@@ -129,7 +167,6 @@ ASTNode* parse_declaration(Token** current) {
 
     declaration->expression = parse_expression(current);
 
-
     node->data.Declaration = *declaration;
 
     return node;
@@ -140,7 +177,7 @@ ASTNode* parse_print(Token** current) {
     node->type = AST_PRINT;
 
     next_token(current, TOKEN_LPAREN);  // (
-    next_token_any(current);  // beginning of expression
+    next_token_any(current);            // beginning of expression
 
     node->data.Print.expression = parse_expression(current);
 
@@ -208,7 +245,9 @@ ASTList* parse(TokenList* tokens) {
             printf("Unexpected token %s\n", TokenNames[current->type]);
             exit(1);
         }
-        current++;
+        if (current->type == TOKEN_EOF) break;
+
+        next_token_any(&current);
     }
 
     ASTList* ast_list = malloc(sizeof(ASTList));

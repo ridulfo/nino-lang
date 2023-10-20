@@ -17,7 +17,7 @@ typedef enum ASTNodeType {
     AST_TYPE,
     AST_ARRAY_TYPE,
     AST_DECLARATION,
-    AST_FUNCTION_DECLARATION,
+    AST_FUNCTION,
     AST_SCOPED_VARIABLES,
     AST_FUNCTION_CALL,
     AST_ARGUMENT_LIST,
@@ -46,7 +46,7 @@ static char* ASTNodeNames[] = {
     "AST_TYPE",
     "AST_ARRAY_TYPE",
     "AST_DECLARATION",
-    "AST_FUNCTION_DECLARATION",
+    "AST_FUNCTION",
     "AST_SCOPED_VARIABLES",
     "AST_FUNCTION_CALL",
     "AST_ARGUMENT_LIST",
@@ -70,6 +70,25 @@ typedef struct Declaration {
     struct Expression* expression;
 
 } Declaration;
+
+typedef struct FunctionParameter {
+    char* identifier;
+    size_t identifier_length;
+
+    char* type;
+    size_t type_length;
+} FunctionParameter;
+
+typedef struct Function {
+    FunctionParameter* parameters;
+    size_t num_parameters;
+
+    char* return_type;
+    size_t return_type_length;
+
+    struct Expression* expression;
+
+} Function;
 
 typedef struct Print {
     struct Expression* expression;
@@ -103,6 +122,7 @@ typedef struct Expression {
         struct Identifier Identifier;
         struct Literal Literal;
         struct BinaryOperation BinaryOperation;
+        struct Function Function;
     } data;
 
 } Expression;
