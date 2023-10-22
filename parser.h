@@ -90,6 +90,14 @@ typedef struct Function {
 
 } Function;
 
+typedef struct FunctionCall{
+    char* identifier;
+    size_t identifier_length;
+
+    struct Expression* arguments;
+    size_t num_arguments;
+} FunctionCall;
+
 typedef struct Print {
     struct Expression* expression;
 } Print;
@@ -123,6 +131,7 @@ typedef struct Expression {
         struct Literal Literal;
         struct BinaryOperation BinaryOperation;
         struct Function Function;
+        struct FunctionCall FunctionCall;
     } data;
 
 } Expression;
@@ -131,6 +140,7 @@ typedef struct ASTNode {
     ASTNodeType type;
     union {
         struct Declaration Declaration;
+        struct Expression Expression;
         struct Print Print;
     } data;
 

@@ -22,6 +22,7 @@ It will not have a garbage collector (TBD 🤨).
 - 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
 - 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
 - 2023-10-17: Created compiler program
+- 2023-10-22: Implemented declaring and calling functions. Function calls can be used as values in an expression. The next steps will need to be refactoring and adding unit tests.
 
 ## Quick start
 
@@ -52,12 +53,15 @@ Grammar definition can be found in [here](docs/grammar.md).
 Check the [examples](examples) directory for the currently supported syntax.
 
 ```Rust
-let x:i32 = 13;
-let y:i32 = 14;
-let z:i32 = x + y;
+let inc:fn = (x:i32):i32=>x+1;
+let dec:fn = (x:i32):i32=>x-1;
 
-print(z);
-print(13+14)
+let a:i32 = inc(0);
+let b:i32 = dec(0);
+let c:i32 = a+b;
+print(a); // 1
+print(b); // -1
+print(c); // 0
 ```
 
 ### In the future...

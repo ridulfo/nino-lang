@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
     printf("Parsing...\n");
     ASTList* ast_list = parse(tokens);
 
-    printf("Generating code...\n");
+    printf("Generating code...\n\n");
     char* llvm_ir = code_gen(ast_list);
     printf("Generated code:\n%s\n\n", llvm_ir);
     printf("Compiling...\n");

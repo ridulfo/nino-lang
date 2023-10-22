@@ -62,13 +62,43 @@ Expression* parse_function(Token** current) {
     return node;
 }
 
+Expression* parse_function_call(Token** current) {
+    Expression* expr = malloc(sizeof(Expression));
+    expr->type = AST_FUNCTION_CALL;
+    FunctionCall* function_call = malloc(sizeof(FunctionCall));
+    function_call->identifier = (*current)->text;
+    function_call->identifier_length = (*current)->length;
+
+    next_token(current, TOKEN_LPAREN);
+
+    Expression* arguments = malloc(10 * sizeof(Expression*));  // Max number of function arguments
+    function_call->arguments = arguments;
+
+    while((*current)->type != TOKEN_RPAREN) {
+        next_token_any(current);
+        arguments[function_call->num_arguments++] = *parse_expression(current);
+        if ((*current)->type == TOKEN_COMMA) {
+            next_token_any(current);
+        }
+    }
+
+    expr->data.FunctionCall = *function_call;
+
+    return expr;
+}
+
 Expression* parse_primary(Token** current) {
     Expression* expr = malloc(sizeof(Expression));
     switch ((*current)->type) {
         case TOKEN_IDENTIFIER:
-            expr->type = AST_IDENTIFIER;
-            expr->data.Identifier.value = (*current)->text;
-            expr->data.Identifier.length = (*current)->length;
+            // Either a variable or a function call
+            if (peek_token(current, 1) == TOKEN_LPAREN) {
+                expr = parse_function_call(current);
+            } else {
+                expr->type = AST_IDENTIFIER;
+                expr->data.Identifier.value = (*current)->text;
+                expr->data.Identifier.length = (*current)->length;
+            }
             break;
         case TOKEN_LITERAL_INT:
             expr->type = AST_INTEGER_LITERAL;
@@ -241,13 +271,18 @@ ASTList* parse(TokenList* tokens) {
         } else if (current->type == TOKEN_PRINT) {
             // TODO: Handle this as any other function
             items[items_length++] = parse_print(&current);
+        } else if (current->type == TOKEN_IDENTIFIER) {
+            ASTNode *node = malloc(sizeof(ASTNode));
+            node->type = AST_EXPRESSION;
+            node->data.Expression = *parse_expression(&current);
+            items[items_length++] = node;
         } else {
-            printf("Unexpected token %s\n", TokenNames[current->type]);
+            printf("Parser: Unexpected token %s\n", TokenNames[current->type]);
             exit(1);
         }
+        if(current->type == TOKEN_SEMICOLON) next_token_any(&current);
         if (current->type == TOKEN_EOF) break;
 
-        next_token_any(&current);
     }
 
     ASTList* ast_list = malloc(sizeof(ASTList));

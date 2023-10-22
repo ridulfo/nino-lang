@@ -115,14 +115,86 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
     }
 
     if (expression->type == AST_FUNCTION) {
-        // "define i32 @x(type1 arg1, type2 arg2){\n"
-        // "   ret i32 arg\n"
-        // "}\n\n";
+        /*              Here we need to declare a function.
+         * When declaring a function, the arguments are passed by value. In order
+         * for the other operators to use them, they need to be loaded into new
+         * variables. The arguments are given a temporary name, and then their
+         * value is stored in the user-defined name.
+         *
+         * define i32 @x(type1 arg1, type2 arg2){
+         *    ret i32 arg
+         * };
+         */
+
+        char* arguments = malloc(100 * sizeof(char));
+        char* argument_translated_id = malloc(100 * sizeof(char));
+
+        for (int i = 0; i < (int)expression->data.Function.num_parameters; i++) {
+            FunctionParameter parameter = expression->data.Function.parameters[i];
+            char* parameter_id = malloc(100 * sizeof(char));
+            strcpy(parameter_id, identifier);
+            append_id(parameter_id);
+
+            sprintf(arguments + strlen(arguments), "%s %%%s", parameter.type, parameter_id);
+            sprintf(argument_translated_id + strlen(argument_translated_id), 
+            "  %%%s = alloca %s\n"
+            "  store %s %%%s, %s* %%%s\n\n",
+            parameter.identifier, parameter.type,
+            parameter.type, parameter_id, parameter.type, parameter.identifier);
+
+            if (i != (int)expression->data.Function.num_parameters - 1) {
+                strcat(arguments, ", ");
+            }
+        }
         sprintf(functions + strlen(functions),
-                "define i32 @%s(){\n"
-                "   ret i32 1\n"
+                "define i32 @%s(%s){\n", identifier, arguments);
+
+        sprintf(functions + strlen(functions), "%s\n", argument_translated_id);
+
+        char* result_id = build_expression(identifier, expression->data.Function.expression, functions);
+        char* translate_result_id = malloc(100 * sizeof(char));
+        strcpy(translate_result_id, identifier);
+        append_id(translate_result_id);
+
+        sprintf(functions + strlen(functions),
+                "  %%%s = load i32, i32* %%%s\n"
+                "  ret i32 %%%s\n"
                 "}\n\n",
-                identifier);
+                translate_result_id, result_id, translate_result_id);
+
+        return identifier;
+    }
+
+    if (expression->type == AST_FUNCTION_CALL) {
+        char* arguments = malloc(100 * sizeof(char));
+        for (int i = 0; i < (int)expression->data.FunctionCall.num_arguments; i++) {
+            char* result_id = malloc(100 * sizeof(char));
+            strcpy(result_id, identifier);
+            append_id(result_id);
+            Expression* argument = &expression->data.FunctionCall.arguments[i];
+            char* argument_id = build_expression(result_id, argument, output);
+            char* loaded_id = malloc(100 * sizeof(char));
+            strcpy(loaded_id, identifier);
+            append_id(loaded_id);
+            sprintf(output + strlen(output),
+                    "   %%%s = load i32, i32* %%%s\n",
+                    loaded_id, argument_id);
+
+            sprintf(arguments + strlen(arguments), "i32 %%%s", loaded_id);
+            if (i != (int)expression->data.FunctionCall.num_arguments - 1) {
+                strcat(arguments, ", ");
+            }
+        }
+
+        char* result_id = malloc(100 * sizeof(char));
+        strcpy(result_id, identifier);
+        append_id(result_id);
+
+        sprintf(output + strlen(output),
+                "   %%%s = alloca i32\n"
+                "   %%%s =  call i32 @%s(%s)\n\n"
+                "   store i32 %%%s, i32* %%%s\n\n",
+                identifier, result_id, expression->data.FunctionCall.identifier, arguments, result_id, identifier);
         return identifier;
     }
 
@@ -160,6 +232,9 @@ char* code_gen(ASTList* ast_list) {
         }
         if (node->type == AST_PRINT) {
             build_print(&node->data.Print, main);
+        }
+        if (node->type == AST_EXPRESSION) {
+            build_expression(node->data.Expression.data.FunctionCall.identifier, &node->data.Expression, main);
         }
     }
 
