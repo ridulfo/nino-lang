@@ -191,6 +191,7 @@ Expression* parse_primary(Token** current) {
             // Either a variable or a function call
             if (peek_token(current, 1) == TOKEN_LPAREN) {
                 expr = parse_function_call(current);
+                next_token_any(current);
             } else {
                 expr->type = AST_IDENTIFIER;
                 expr->data.Identifier.value = (*current)->text;

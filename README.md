@@ -54,14 +54,14 @@ Check the [examples](examples) directory for the currently supported syntax.
 
 ```Rust
 let inc:fn = (x:i32):i32=>x+1;
-let dec:fn = (x:i32):i32=>x-1;
 
-let a:i32 = inc(0);
-let b:i32 = dec(0);
-let c:i32 = a+b;
-print(a); // 1
-print(b); // -1
-print(c); // 0
+let b:i32 = func(2) ? {
+    2 => 3,
+    3 => 4,
+    4 => 5,
+};
+
+print(b);
 ```
 
 ### In the future...

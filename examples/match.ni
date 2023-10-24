@@ -1,11 +1,8 @@
-let a:i32 = 3;
+let inc:fn = (x:i32):i32=>x+1;
 
-let b:i32 = a ? {
-    2 => 3,
-    3 => 4,
-    4 => 5,
+let b:i32 = inc(0) ? {
+    0 => inc(1),
+    1 => inc(2),
 };
 
-let c:i32 = b - 1;
-
-print(c);
+print(b);
