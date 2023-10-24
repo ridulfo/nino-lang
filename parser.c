@@ -6,6 +6,49 @@
 
 #include "lexer.h"
 
+void rec_print_expr_tree(Expression* node, int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("%s\n", ASTNodeNames[node->type]);
+    if (node->type == AST_BINARY_OPERATION) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Operator: %s\n", node->data.BinaryOperation.operator);
+        rec_print_expr_tree(node->data.BinaryOperation.left, depth + 1);
+        rec_print_expr_tree(node->data.BinaryOperation.right, depth + 1);
+    } else if (node->type == AST_INTEGER_LITERAL) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Value: %s\n", node->data.Literal.value);
+    } else if (node->type == AST_IDENTIFIER) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Value: %s\n", node->data.Identifier.value);
+    }
+}
+
+void rec_print_ast_tree(ASTNode* node, int depth) {
+    for (int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("%s\n", ASTNodeNames[node->type]);
+    if (node->type == AST_DECLARATION) {
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Identifier: %s\n", node->data.Declaration.identifier);
+        for (int i = 0; i < depth + 1; i++) {
+            printf("  ");
+        }
+        printf("Type: %s\n", node->data.Declaration.type);
+        rec_print_expr_tree(node->data.Declaration.expression, depth + 1);
+    }
+}
+
 void next_token_any(Token** current) {
     (*current)++;
     print_token(*current);
@@ -74,7 +117,7 @@ Expression* parse_function_call(Token** current) {
     Expression* arguments = malloc(10 * sizeof(Expression*));  // Max number of function arguments
     function_call->arguments = arguments;
 
-    while((*current)->type != TOKEN_RPAREN) {
+    while ((*current)->type != TOKEN_RPAREN) {
         next_token_any(current);
         arguments[function_call->num_arguments++] = *parse_expression(current);
         if ((*current)->type == TOKEN_COMMA) {
@@ -87,8 +130,62 @@ Expression* parse_function_call(Token** current) {
     return expr;
 }
 
+Expression* parse_pattern_match(Token** current, Expression* expression) {
+    Expression* expr = malloc(sizeof(Expression));
+    expr->type = AST_PATTERN_MATCH;
+
+    Match* match = malloc(sizeof(Match));
+    match->expression = expression;
+    match->patterns = malloc(10 * sizeof(Expression));  // Max number of patterns
+    match->num_patterns = 0;
+    match->values = malloc(10 * sizeof(Expression));  // Max number of values
+    match->num_values = 0;
+
+    next_token(current, TOKEN_LBRACE);
+
+    next_token_any(current);
+
+    while ((*current)->type != TOKEN_RBRACE) {
+        match->patterns[match->num_patterns++] = *parse_expression(current);
+        next_token_any(current);
+        match->values[match->num_values++] = *parse_expression(current);
+
+        if ((*current)->type == TOKEN_COMMA) next_token_any(current);
+    }
+
+
+    // Expression* patterns = match->patterns;
+    // Expression* values = match->values;
+
+    // match->expression = expression;
+
+    // next_token(current, TOKEN_LBRACE);
+
+    // next_token_any(current);
+    // while ((*current)->type != TOKEN_RBRACE) {
+    //     *patterns = *parse_expression(current);
+    //     match->num_patterns++;
+    //     patterns++;
+    //     next_token_any(current);
+
+    //     *values = *parse_expression(current);
+    //     match->num_values++;
+    //     values++;
+    //     if ((*current)->type == TOKEN_COMMA) {
+    //         next_token_any(current);
+    //     }
+    // }
+
+    expr->data.Match = *match;
+
+    next_token_any(current);
+
+    return expr;
+}
+
 Expression* parse_primary(Token** current) {
     Expression* expr = malloc(sizeof(Expression));
+
     switch ((*current)->type) {
         case TOKEN_IDENTIFIER:
             // Either a variable or a function call
@@ -98,6 +195,7 @@ Expression* parse_primary(Token** current) {
                 expr->type = AST_IDENTIFIER;
                 expr->data.Identifier.value = (*current)->text;
                 expr->data.Identifier.length = (*current)->length;
+                next_token_any(current);
             }
             break;
         case TOKEN_LITERAL_INT:
@@ -106,6 +204,7 @@ Expression* parse_primary(Token** current) {
             expr->data.Literal.type_name_length = 3;
             expr->data.Literal.value = (*current)->text;
             expr->data.Literal.length = (*current)->length;
+            next_token_any(current);
             break;
         case TOKEN_LPAREN:
             if (peek_token(current, 1) == TOKEN_IDENTIFIER && peek_token(current, 2) == TOKEN_COLON && peek_token(current, 3) == TOKEN_TYPE) {
@@ -117,7 +216,10 @@ Expression* parse_primary(Token** current) {
             exit(1);
             break;
     }
-    next_token_any(current);
+    // Check if it is pattern matching
+    if ((*current)->type == TOKEN_QUESTION) {
+        expr = parse_pattern_match(current, expr);
+    }
     return expr;
 }
 
@@ -216,49 +318,6 @@ ASTNode* parse_print(Token** current) {
     return node;
 }
 
-void rec_print_expr_tree(Expression* node, int depth) {
-    for (int i = 0; i < depth; i++) {
-        printf("  ");
-    }
-    printf("%s\n", ASTNodeNames[node->type]);
-    if (node->type == AST_BINARY_OPERATION) {
-        for (int i = 0; i < depth + 1; i++) {
-            printf("  ");
-        }
-        printf("Operator: %s\n", node->data.BinaryOperation.operator);
-        rec_print_expr_tree(node->data.BinaryOperation.left, depth + 1);
-        rec_print_expr_tree(node->data.BinaryOperation.right, depth + 1);
-    } else if (node->type == AST_INTEGER_LITERAL) {
-        for (int i = 0; i < depth + 1; i++) {
-            printf("  ");
-        }
-        printf("Value: %s\n", node->data.Literal.value);
-    } else if (node->type == AST_IDENTIFIER) {
-        for (int i = 0; i < depth + 1; i++) {
-            printf("  ");
-        }
-        printf("Value: %s\n", node->data.Identifier.value);
-    }
-}
-
-void rec_print_ast_tree(ASTNode* node, int depth) {
-    for (int i = 0; i < depth; i++) {
-        printf("  ");
-    }
-    printf("%s\n", ASTNodeNames[node->type]);
-    if (node->type == AST_DECLARATION) {
-        for (int i = 0; i < depth + 1; i++) {
-            printf("  ");
-        }
-        printf("Identifier: %s\n", node->data.Declaration.identifier);
-        for (int i = 0; i < depth + 1; i++) {
-            printf("  ");
-        }
-        printf("Type: %s\n", node->data.Declaration.type);
-        rec_print_expr_tree(node->data.Declaration.expression, depth + 1);
-    }
-}
-
 ASTList* parse(TokenList* tokens) {
     ASTNode** items = malloc(1000 * sizeof(ASTNode));
     size_t items_length = 0;
@@ -272,7 +331,7 @@ ASTList* parse(TokenList* tokens) {
             // TODO: Handle this as any other function
             items[items_length++] = parse_print(&current);
         } else if (current->type == TOKEN_IDENTIFIER) {
-            ASTNode *node = malloc(sizeof(ASTNode));
+            ASTNode* node = malloc(sizeof(ASTNode));
             node->type = AST_EXPRESSION;
             node->data.Expression = *parse_expression(&current);
             items[items_length++] = node;
@@ -280,9 +339,8 @@ ASTList* parse(TokenList* tokens) {
             printf("Parser: Unexpected token %s\n", TokenNames[current->type]);
             exit(1);
         }
-        if(current->type == TOKEN_SEMICOLON) next_token_any(&current);
+        if (current->type == TOKEN_SEMICOLON) next_token_any(&current);
         if (current->type == TOKEN_EOF) break;
-
     }
 
     ASTList* ast_list = malloc(sizeof(ASTList));

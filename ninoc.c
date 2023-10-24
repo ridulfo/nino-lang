@@ -6,6 +6,24 @@
 #include "lexer.h"
 #include "parser.h"
 
+void printWithLineNumbers(const char* inputString) {
+    int lineNumber = 1;
+
+    for (; *inputString; inputString++) {
+        printf("%d: ", lineNumber);
+
+        while (*inputString && *inputString != '\n') {
+            putchar(*inputString);
+            inputString++;
+        }
+
+        if (*inputString == '\n') {
+            putchar('\n');
+            lineNumber++;
+        }
+    }
+}
+
 char* load_file(char* file_name) {
     FILE* file = fopen(file_name, "r");
     assert(file && "File could not be opened.");
@@ -94,7 +112,7 @@ int main(int argc, char* argv[]) {
 
     printf("Generating code...\n\n");
     char* llvm_ir = code_gen(ast_list);
-    printf("Generated code:\n%s\n\n", llvm_ir);
+    printWithLineNumbers(llvm_ir);
     printf("Compiling...\n");
     compile(llvm_ir, destination_file_name);
 

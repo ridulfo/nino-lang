@@ -98,6 +98,16 @@ typedef struct FunctionCall{
     size_t num_arguments;
 } FunctionCall;
 
+typedef struct Match {
+    struct Expression* expression;
+
+    struct Expression* patterns;
+    size_t num_patterns;
+
+    struct Expression* values;
+    size_t num_values;
+} Match;
+
 typedef struct Print {
     struct Expression* expression;
 } Print;
@@ -132,6 +142,7 @@ typedef struct Expression {
         struct BinaryOperation BinaryOperation;
         struct Function Function;
         struct FunctionCall FunctionCall;
+        struct Match Match;
     } data;
 
 } Expression;
@@ -153,3 +164,5 @@ typedef struct ASTList {
 
 void print_node(ASTNode* node);
 ASTList* parse(TokenList* tokens);
+
+void rec_print_expr_tree(Expression* node, int depth);
