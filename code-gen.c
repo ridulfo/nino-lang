@@ -6,6 +6,8 @@
 #include "parser.h"
 
 char functions[10000] = {0};
+char matches[10000] = {0};
+
 
 char* printing_header =
     "@.int_str = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\"\n"
@@ -211,15 +213,15 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
          * 5. Create a basic block for the end
          */
 
-        sprintf(functions + strlen(functions),
+        sprintf(matches + strlen(matches),
                 "define i32 @%s_match(i32 %%value) {\n"
                 "  %%result = alloca i32\n",
                 identifier);
 
-        sprintf(functions + strlen(functions),
+        sprintf(matches + strlen(matches),
                 "  br label %%pattern_0\n\n");
 
-        char basic_blocks[1000] = {0};
+        char basic_blocks[10000] = {0};
 
         for (int i = 0; i < (int)expression->data.Match.num_patterns; i++) {
             Expression pattern = *(expression->data.Match.patterns + i);
@@ -289,7 +291,7 @@ char* build_expression(char* identifier, Expression* expression, char* output) {
                 "  ret i32 %%result_value\n"
                 "}\n\n");
 
-        strcat(functions, basic_blocks);
+        strcat(matches, basic_blocks);
 
         /* Now that we have the match function we need to call it. First we calculate the to-match-expression
          * and then we call the match function with the to-match-expression as an argument.
@@ -360,6 +362,7 @@ char* code_gen(ASTList* ast_list) {
            "\n");
 
     char* code = malloc(10000 * sizeof(char));
+    strcat(code, matches);
     strcat(code, functions);
     strcat(code, main);
 
