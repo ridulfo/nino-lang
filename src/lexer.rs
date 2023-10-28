@@ -150,11 +150,10 @@ impl<'a> Lexer<'a> {
 
     pub fn tokenize(&mut self) -> Vec<TokenKind> {
         let mut tokens = Vec::new();
-        // consume whitespace before parsing because `c` will won't change if
-        // whitespace is consumed after it is peeked.
-        while !self.chars.peek().is_none() {
-            consume_whitespace(&mut self.chars);
-            let &c = self.chars.peek().unwrap();
+
+        while self.chars.peek().is_some() {
+            consume_whitespace(&mut self.chars); // Needed because early continue skips the bottom consume_whitespace
+            let c = self.chars.peek().unwrap();
 
             let token = match c {
                 'a'..='z' => {
@@ -242,6 +241,7 @@ impl<'a> Lexer<'a> {
             };
             tokens.push(token);
             self.chars.next();
+            consume_whitespace(&mut self.chars); // if the last character is a whitespace
         }
         tokens.push(TokenKind::EOF);
 
