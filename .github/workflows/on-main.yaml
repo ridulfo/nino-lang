@@ -3,10 +3,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "makefile"
-      - "**/*.c"
-      - "**/*.h"
+      - rust
   workflow_dispatch:
     
       
@@ -17,14 +14,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: Making build directory
-      run: mkdir build
-
-    - name: Run lexer tests
-      run: make test-lexer
-
-    - name: Run parser tests
-      run: bash tests/e2e-test.sh
-    
-    - name: Bulid compiler
-      run: make
+    - name: Run tests
+      run: cargo test
