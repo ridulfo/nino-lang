@@ -46,6 +46,7 @@ impl VirtualMachine {
                             BinaryOperator::Divide => {
                                 Expression::Float((left_val as f32) / (right_val as f32))
                             } // Implement other operations as needed
+                            BinaryOperator::Modulo => Expression::Integer(left_val % right_val),
                             _ => unimplemented!("Unknown operator {:?}", operator),
                         }
                     }
@@ -54,18 +55,35 @@ impl VirtualMachine {
                         BinaryOperator::Subtract => Expression::Float(left_val - right_val),
                         BinaryOperator::Multiply => Expression::Float(left_val * right_val),
                         BinaryOperator::Divide => Expression::Float(left_val / right_val),
+                        BinaryOperator::Modulo => Expression::Float(left_val % right_val),
                         _ => unimplemented!("Unknown operator {:?}", operator),
                     },
-                    (Expression::Integer(left_val), Expression::Float(right_val))
-                    | (Expression::Float(right_val), Expression::Integer(left_val)) => {
-                        match operator {
-                            BinaryOperator::Add => Expression::Float((left_val as f32) + right_val),
-                            BinaryOperator::Subtract => Expression::Float((left_val as f32) - right_val),
-                            BinaryOperator::Multiply => Expression::Float((left_val as f32) * right_val),
-                            BinaryOperator::Divide => Expression::Float((left_val as f32) / right_val),
-                            _ => unimplemented!("Unknown operator {:?}", operator),
+                    (Expression::Integer(left_val), Expression::Float(right_val)) => match operator
+                    {
+                        BinaryOperator::Add => Expression::Float((left_val as f32) + right_val),
+                        BinaryOperator::Subtract => {
+                            Expression::Float((left_val as f32) - right_val)
                         }
-                    }
+                        BinaryOperator::Multiply => {
+                            Expression::Float((left_val as f32) * right_val)
+                        }
+                        BinaryOperator::Divide => Expression::Float((left_val as f32) / right_val),
+                        BinaryOperator::Modulo => Expression::Float((left_val as f32) % right_val),
+                        _ => unimplemented!("Unknown operator {:?}", operator),
+                    },
+                    (Expression::Float(left_val), Expression::Integer(right_val)) => match operator
+                    {
+                        BinaryOperator::Add => Expression::Float(left_val + (right_val as f32)),
+                        BinaryOperator::Subtract => {
+                            Expression::Float(left_val - (right_val as f32))
+                        }
+                        BinaryOperator::Multiply => {
+                            Expression::Float(left_val * (right_val as f32))
+                        }
+                        BinaryOperator::Divide => Expression::Float(left_val / (right_val as f32)),
+                        BinaryOperator::Modulo => Expression::Float(left_val % (right_val as f32)),
+                        _ => unimplemented!("Unknown operator {:?}", operator),
+                    },
                     _ => panic!("Invalid types or operation"), // Handle other cases or operations
                 }
             }
@@ -84,7 +102,7 @@ impl VirtualMachine {
                     self.symbols.insert(declaration.name.clone(), declaration);
                 }
                 Item::Expression(expression) => {
-                    println!("Expression {:?}", self.evaluate(expression));
+                    self.evaluate(expression);
                 }
             }
         }
