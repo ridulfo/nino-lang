@@ -4,7 +4,7 @@ use std::{iter::Peekable, slice::Iter};
 
 use crate::lexer::TokenKind;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     Integer,
     Float,
@@ -13,12 +13,13 @@ pub enum Type {
 }
 
 #[derive(Debug, PartialEq)]
+#[derive(Clone)]
 pub struct FunctionParameter {
     name: String,
     type_: Type,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionDeclaration {
     name: String,
     parameters: Vec<FunctionParameter>,
@@ -26,13 +27,13 @@ pub struct FunctionDeclaration {
     expression: Box<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionCall {
     name: String,
     arguments: Vec<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum BinaryOperator {
     Add,
     Subtract,
@@ -49,7 +50,7 @@ pub enum BinaryOperator {
     Or,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BinaryOperation {
     pub operator: BinaryOperator,
     pub left: Box<Expression>,
@@ -63,7 +64,7 @@ pub struct Declaration {
     pub expression: Box<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Identifier(String),
     Integer(i32),
@@ -228,7 +229,7 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
         _ => panic!("Expected type"),
     };
     match tokens.next() {
-        Some(TokenKind::Equal) => {}
+        Some(TokenKind::Assignment) => {}
         _ => panic!("Expected equal"),
     };
     let expression = parse_expression(tokens);
@@ -249,7 +250,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub  fn new(tokens: &'a [TokenKind]) -> Self {
+    pub fn new(tokens: &'a [TokenKind]) -> Self {
         Self {
             tokens: tokens.iter().peekable(),
         }
@@ -259,11 +260,16 @@ impl<'a> Parser<'a> {
         let mut items = vec![];
         while let Some(token) = self.tokens.peek() {
             match token {
+                TokenKind::EOF => break,
                 TokenKind::Let => {
                     let declaration = parse_declaration(&mut self.tokens);
                     items.push(Item::Declaration(declaration));
                 }
-                _ => items.push(Item::Expression(parse_expression(&mut self.tokens))),
+                _ => {
+                    let expression = parse_expression(&mut self.tokens);
+                    items.push(Item::Expression(expression));
+                    self.tokens.next(); // Consume semicolon
+                }
             }
         }
         items
@@ -282,7 +288,7 @@ mod tests {
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
             TokenKind::Type("i32".to_string()),
-            TokenKind::Equal,
+            TokenKind::Assignment,
             TokenKind::Integer(3),
             TokenKind::Semicolon,
         ];
@@ -324,7 +330,7 @@ mod tests {
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
             TokenKind::Type("bool".to_string()),
-            TokenKind::Equal,
+            TokenKind::Assignment,
             TokenKind::Integer(1),
             TokenKind::Addition,
             TokenKind::Integer(3),
