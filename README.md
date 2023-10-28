@@ -23,26 +23,22 @@ It will not have a garbage collector (TBD 🤨).
 - 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
 - 2023-10-17: Created compiler program
 - 2023-10-22: Implemented declaring and calling functions. Function calls can be used as values in an expression. The next steps will need to be refactoring and adding unit tests.
+- 2023-10-28: Re-wrote the lexer and parser to rust. Added tons of unit tests. Created an interpreter to run `.ni` files.
 
 ## Quick start
 
-**Compile the compiler**
+**Compile the interpreter**
 
 ```Bash
-make
-```
-
-**Compile an example program**
-
-```Bash
-./ninoc examples/print-sum.ni
+cargo build --release && mv target/release/ninoi .
 ```
 
 **Run the example program**
 
 ```Bash
-./print-sum
+./ninoi examples/print-sum.ni
 ```
+
 
 ## Syntax
 
@@ -53,15 +49,15 @@ Grammar definition can be found in [here](docs/grammar.md).
 Check the [examples](examples) directory for the currently supported syntax.
 
 ```Rust
-let inc:fn = (x:i32):i32=>x+1;
+let a:i32 = 10;
+let b:i32 = 5;
 
-let b:i32 = func(2) ? {
-    2 => 3,
-    3 => 4,
-    4 => 5,
-};
-
+print(a);
 print(b);
+print(a + b);
+print(a - b);
+print(a * b);
+print(a / b);
 ```
 
 ### In the future...
