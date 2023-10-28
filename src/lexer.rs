@@ -26,7 +26,7 @@ pub enum TokenKind {
     Comma,
     Colon,
     Semicolon,
-    Quote,
+    // Quote, // Is this needed?
     Pipe,
 
     // identifiers
@@ -136,6 +136,7 @@ fn parse_word(chars: &mut Peekable<Chars>) -> TokenKind {
         "fn" => TokenKind::Function,
         "true" => TokenKind::Bool(true),
         "false" => TokenKind::Bool(false),
+        "mod" => TokenKind::Modulus,
         _ => TokenKind::Identifier(string),
     }
 }
@@ -240,7 +241,6 @@ impl<'a> Lexer<'a> {
                 '-' => TokenKind::Subtraction,
                 '*' => TokenKind::Multiplication,
                 '/' => TokenKind::Division,
-                '%' => TokenKind::Modulus,
                 '?' => TokenKind::Question,
                 _ => panic!("Unexpected character: {}", c),
             };
@@ -256,6 +256,17 @@ impl<'a> Lexer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn compare_tokens(actual: Vec<TokenKind>, expected: Vec<TokenKind>) {
+        for (i, (actual, expected)) in actual.iter().zip(expected.iter()).enumerate() {
+            assert_eq!(
+                actual, expected,
+                "Expected {:?} but got {:?} at index {}",
+                expected, actual, i
+            );
+        }
+        assert_eq!(actual.len(), expected.len());
+    }
 
     #[test]
     fn test_parse_number() {
@@ -357,6 +368,100 @@ mod tests {
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ]
+        );
+    }
+
+    #[test]
+    fn test_is_prime() {
+        let input = "let is_prime:fn = (x:i32):bool =>
+    | let sqrt_x:f32 = sqrt(x);
+    | let sqrt_x_int:i32 = floor(sqrt_x);
+    => true ? {
+        x==1 => false,
+        x==2 => true,
+        x mod 2 == 0 => false,
+        true => is_prime_helper(x, 3, sqrt_x_int)
+    };";
+
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+
+        compare_tokens(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("is_prime".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("fn".to_string()),
+                TokenKind::Assignment,
+                TokenKind::LeftParen,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("i32".to_string()),
+                TokenKind::RightParen,
+                TokenKind::Colon,
+                TokenKind::Type("bool".to_string()),
+                TokenKind::Arrow,
+                TokenKind::Pipe,
+                TokenKind::Let,
+                TokenKind::Identifier("sqrt_x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("f32".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Identifier("sqrt".to_string()),
+                TokenKind::LeftParen,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::RightParen,
+                TokenKind::Semicolon,
+                TokenKind::Pipe,
+                TokenKind::Let,
+                TokenKind::Identifier("sqrt_x_int".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("i32".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Identifier("floor".to_string()),
+                TokenKind::LeftParen,
+                TokenKind::Identifier("sqrt_x".to_string()),
+                TokenKind::RightParen,
+                TokenKind::Semicolon,
+                TokenKind::Arrow,
+                TokenKind::Bool(true),
+                TokenKind::Question,
+                TokenKind::LeftBrace,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Equal,
+                TokenKind::Integer(1),
+                TokenKind::Arrow,
+                TokenKind::Bool(false),
+                TokenKind::Comma,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Equal,
+                TokenKind::Integer(2),
+                TokenKind::Arrow,
+                TokenKind::Bool(true),
+                TokenKind::Comma,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Modulus,
+                TokenKind::Integer(2),
+                TokenKind::Equal,
+                TokenKind::Integer(0),
+                TokenKind::Arrow,
+                TokenKind::Bool(false),
+                TokenKind::Comma,
+                TokenKind::Bool(true),
+                TokenKind::Arrow,
+                TokenKind::Identifier("is_prime_helper".to_string()),
+                TokenKind::LeftParen,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Comma,
+                TokenKind::Integer(3),
+                TokenKind::Comma,
+                TokenKind::Identifier("sqrt_x_int".to_string()),
+                TokenKind::RightParen,
+                TokenKind::RightBrace,
+                TokenKind::Semicolon,
+                TokenKind::EOF,
+            ],
         );
     }
 }

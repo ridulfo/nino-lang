@@ -82,9 +82,7 @@ pub enum Item {
     Expression(Expression),
 }
 pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
-    let c = tokens.next();
-    println!("{:?}", c);
-    match c {
+    match tokens.next() {
         Some(TokenKind::Identifier(name)) => Expression::Identifier(name.clone()),
         Some(TokenKind::Integer(value)) => Expression::Integer(*value),
         Some(TokenKind::Float(value)) => Expression::Float(*value),
@@ -246,18 +244,18 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
 }
 
 #[derive(Debug)]
-struct Parser<'a> {
+pub struct Parser<'a> {
     tokens: Peekable<Iter<'a, TokenKind>>,
 }
 
 impl<'a> Parser<'a> {
-    fn new(tokens: &'a [TokenKind]) -> Self {
+    pub  fn new(tokens: &'a [TokenKind]) -> Self {
         Self {
             tokens: tokens.iter().peekable(),
         }
     }
 
-    fn parse(&mut self) -> Vec<Item> {
+    pub fn parse(&mut self) -> Vec<Item> {
         let mut items = vec![];
         while let Some(token) = self.tokens.peek() {
             match token {
