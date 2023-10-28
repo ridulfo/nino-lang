@@ -13,7 +13,7 @@ pub enum TokenKind {
     Bool(bool),
     Function,
 
-    // builtins
+    // builtin
     Print,
 
     // separators
@@ -181,32 +181,51 @@ impl<'a> Lexer<'a> {
                 }
                 '!' => {
                     self.chars.next();
-                    match self.chars.peek() {
-                        Some('=') => TokenKind::NotEqual,
+                    tokens.push(match self.chars.peek() {
+                        Some('=') => {
+                            self.chars.next(); // consume the '='
+                            TokenKind::NotEqual
+                        }
                         _ => TokenKind::Not,
-                    }
+                    });
+                    continue;
                 }
                 '=' => {
-                    self.chars.next();
-                    match self.chars.peek() {
-                        Some('=') => TokenKind::Equal,
-                        Some('>') => TokenKind::Arrow,
+                    self.chars.next(); // consume the '='
+                    tokens.push(match self.chars.peek() {
+                        Some('=') => {
+                            self.chars.next(); // consume the '='
+                            TokenKind::Equal
+                        }
+                        Some('>') => {
+                            self.chars.next(); // consume the '>'
+                            TokenKind::Arrow
+                        }
                         _ => TokenKind::Assignment,
-                    }
+                    });
+                    continue;
                 }
                 '<' => {
                     self.chars.next();
-                    match self.chars.peek() {
-                        Some('=') => TokenKind::LessEqualThan,
+                    tokens.push(match self.chars.peek() {
+                        Some('=') => {
+                            self.chars.next();
+                            TokenKind::LessEqualThan
+                        }
                         _ => TokenKind::LessThan,
-                    }
+                    });
+                    continue;
                 }
                 '>' => {
                     self.chars.next();
-                    match self.chars.peek() {
-                        Some('=') => TokenKind::GreaterEqualThan,
+                    tokens.push(match self.chars.peek() {
+                        Some('=') => {
+                            self.chars.next();
+                            TokenKind::GreaterEqualThan
+                        }
                         _ => TokenKind::GreaterThan,
-                    }
+                    });
+                    continue;
                 }
                 '(' => TokenKind::LeftParen,
                 ')' => TokenKind::RightParen,
@@ -310,6 +329,32 @@ mod tests {
                 TokenKind::Integer(6),
                 TokenKind::LessEqualThan,
                 TokenKind::Integer(7),
+                TokenKind::EOF,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_equality_expression() {
+        let input = "let x:bool = 1+3>2 == true;";
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+        assert_eq!(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("bool".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Integer(1),
+                TokenKind::Addition,
+                TokenKind::Integer(3),
+                TokenKind::GreaterThan,
+                TokenKind::Integer(2),
+                TokenKind::Equal,
+                TokenKind::Bool(true),
+                TokenKind::Semicolon,
                 TokenKind::EOF,
             ]
         );
