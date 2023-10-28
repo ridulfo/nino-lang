@@ -13,9 +13,6 @@ pub enum TokenKind {
     Bool(bool),
     Function,
 
-    // builtin
-    Print,
-
     // separators
     LeftParen,
     RightParen,
@@ -132,7 +129,6 @@ fn parse_word(chars: &mut Peekable<Chars>) -> TokenKind {
     }
     match string.as_str() {
         "let" => TokenKind::Let,
-        "print" => TokenKind::Print,
         "fn" => TokenKind::Function,
         "true" => TokenKind::Bool(true),
         "false" => TokenKind::Bool(false),

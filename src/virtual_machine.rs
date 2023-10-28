@@ -20,6 +20,18 @@ impl VirtualMachine {
                 let expression = declaration.expression.clone();
                 self.evaluate(*expression)
             }
+            Expression::FunctionCall(function_call) => {
+                if function_call.name == "print" {
+                    let arg = self.evaluate(function_call.arguments[0].clone());
+                    match arg {
+                        Expression::Integer(val) => println!("{}", val),
+                        Expression::Float(val) => println!("{}", val),
+                        Expression::Bool(val) => println!("{}", val),
+                        _ => panic!("Invalid type"),
+                    }
+                }
+                Expression::Integer(0)
+            }
             Expression::BinaryOperation(binary) => {
                 let left = self.evaluate(*binary.left);
                 let right = self.evaluate(*binary.right);

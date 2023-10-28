@@ -12,8 +12,7 @@ pub enum Type {
     Function,
 }
 
-#[derive(Debug, PartialEq)]
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionParameter {
     name: String,
     type_: Type,
@@ -29,8 +28,8 @@ pub struct FunctionDeclaration {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionCall {
-    name: String,
-    arguments: Vec<Expression>,
+    pub name: String,
+    pub arguments: Vec<Expression>,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -82,15 +81,38 @@ pub enum Item {
     Declaration(Declaration),
     Expression(Expression),
 }
+
 pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
     match tokens.next() {
-        Some(TokenKind::Identifier(name)) => Expression::Identifier(name.clone()),
+        Some(TokenKind::Identifier(name)) => match tokens.peek() {
+            Some(&&TokenKind::LeftParen) => {
+                let _ = tokens.next();
+                let mut arguments = vec![];
+                loop {
+                    match tokens.peek() {
+                        Some(&&TokenKind::RightParen) => {
+                            let _ = tokens.next();
+                            break;
+                        }
+                        Some(&&TokenKind::Comma) => {
+                            let _ = tokens.next();
+                        }
+                        _ => {
+                            let expression = parse_expression(tokens);
+                            arguments.push(expression);
+                        }
+                    }
+                }
+                Expression::FunctionCall(FunctionCall {
+                    name: name.clone(),
+                    arguments,
+                })
+            }
+            _ => Expression::Identifier(name.clone()),
+        },
         Some(TokenKind::Integer(value)) => Expression::Integer(*value),
         Some(TokenKind::Float(value)) => Expression::Float(*value),
         Some(TokenKind::Bool(value)) => Expression::Bool(*value),
-        Some(TokenKind::LeftParen) => {
-            unimplemented!()
-        }
         _ => panic!(
             "\nExpected identifier, integer, float, or left paren, got {:?}\n",
             tokens.peek().unwrap()
@@ -318,6 +340,25 @@ mod tests {
                 operator: BinaryOperator::Equal,
                 left: Box::new(Expression::Integer(1)),
                 right: Box::new(Expression::Integer(1)),
+            })
+        );
+    }
+
+    #[test]
+    fn test_function_call() {
+        let tokens = vec![
+            TokenKind::Identifier("print".to_string()),
+            TokenKind::LeftParen,
+            TokenKind::Integer(1),
+            TokenKind::RightParen,
+        ];
+        let mut parser = Parser::new(&tokens);
+        let expression = parse_expression(&mut parser.tokens);
+        assert_eq!(
+            expression,
+            Expression::FunctionCall(FunctionCall {
+                name: "print".to_string(),
+                arguments: vec![Expression::Integer(1)],
             })
         );
     }
