@@ -55,7 +55,7 @@ pub struct BinaryOperation {
     pub right: Box<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Declaration {
     pub name: String,
     pub type_: Type,

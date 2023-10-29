@@ -52,7 +52,7 @@ impl VirtualMachine {
                             _ => panic!("Invalid function"),
                         };
 
-                        let mut symbols: HashMap<String, Declaration> = HashMap::new();
+                        let mut local_symbols: HashMap<String, Declaration> = self.symbols.clone();
                         for (i, argument) in function_call.arguments.iter().enumerate() {
                             let name = function.parameters[i].name.clone();
                             let type_ = function.parameters[i].type_.clone();
@@ -62,10 +62,10 @@ impl VirtualMachine {
                                 type_: type_.clone(),
                                 expression: Box::new(expression).clone(),
                             };
-                            symbols.insert(name.clone(), declaration);
+                            local_symbols.insert(name.clone(), declaration);
                         }
 
-                        let vm = VirtualMachine { symbols: symbols };
+                        let vm = VirtualMachine { symbols: local_symbols };
                         return vm.evaluate(*function.expression);
                     }
                 }
