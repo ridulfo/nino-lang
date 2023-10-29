@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::f32::consts::E;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::lexer::Lexer;
@@ -140,12 +139,7 @@ impl VirtualMachine {
             _ => panic!("Unknown expression {:?}", expression),
         }
     }
-    pub fn interpret(&mut self, input: &str) {
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
-        let mut parser = Parser::new(&tokens);
-        let program = parser.parse();
-
+    pub fn interpret(&mut self, program: Vec<Item>) {
         for statement in program {
             match statement {
                 Item::Declaration(declaration) => {
@@ -165,7 +159,36 @@ mod tests {
     #[test]
     fn test_interpret() {
         let input = "3;";
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let ast = parser.parse();
         let mut vm = VirtualMachine::new();
-        vm.interpret(input);
+        vm.interpret(ast);
+    }
+    
+    #[test]
+    fn test_recursion() {
+        let declare = "let factorial:fn = (n:i32):i32 => n ? {
+    0 => 1,
+    n * factorial(n - 1)
+};
+        ";
+        let mut lexer = Lexer::new(declare);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let declaration_ast = parser.parse();
+
+        let input = "factorial(5);";
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let expression = parser.parse();
+
+        let mut vm = VirtualMachine::new();
+
+        vm.interpret(declaration_ast);
+        println!("{:?}", vm.symbols);
+        vm.interpret(expression);
     }
 }

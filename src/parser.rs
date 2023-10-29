@@ -369,7 +369,7 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
     };
     match tokens.next() {
         Some(TokenKind::Assignment) => {}
-        _ => panic!("Expected equal"),
+        _ => panic!("Expected equal, got {:?}", tokens.peek()),
     };
     let expression = parse_expression(tokens);
     match tokens.next() {
