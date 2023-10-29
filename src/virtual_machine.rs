@@ -66,7 +66,9 @@ impl VirtualMachine {
                             local_symbols.insert(name.clone(), declaration);
                         }
 
-                        let vm = VirtualMachine { symbols: local_symbols };
+                        let vm = VirtualMachine {
+                            symbols: local_symbols,
+                        };
                         return vm.evaluate(*function.expression);
                     }
                 }
@@ -87,6 +89,7 @@ impl VirtualMachine {
                                 Expression::Float((left_val as f32) / (right_val as f32))
                             } // Implement other operations as needed
                             BinaryOperator::Modulo => Expression::Integer(left_val % right_val),
+                            BinaryOperator::Equal => Expression::Bool(left_val == right_val),
                             _ => unimplemented!("Unknown operator {:?}", operator),
                         }
                     }
@@ -96,6 +99,7 @@ impl VirtualMachine {
                         BinaryOperator::Multiply => Expression::Float(left_val * right_val),
                         BinaryOperator::Divide => Expression::Float(left_val / right_val),
                         BinaryOperator::Modulo => Expression::Float(left_val % right_val),
+                        BinaryOperator::Equal => Expression::Bool(left_val == right_val),
                         _ => unimplemented!("Unknown operator {:?}", operator),
                     },
                     (Expression::Integer(left_val), Expression::Float(right_val)) => match operator
@@ -109,6 +113,7 @@ impl VirtualMachine {
                         }
                         BinaryOperator::Divide => Expression::Float((left_val as f32) / right_val),
                         BinaryOperator::Modulo => Expression::Float((left_val as f32) % right_val),
+                        BinaryOperator::Equal => Expression::Bool(left_val == (right_val as i32)),
                         _ => unimplemented!("Unknown operator {:?}", operator),
                     },
                     (Expression::Float(left_val), Expression::Integer(right_val)) => match operator
@@ -122,11 +127,12 @@ impl VirtualMachine {
                         }
                         BinaryOperator::Divide => Expression::Float(left_val / (right_val as f32)),
                         BinaryOperator::Modulo => Expression::Float(left_val % (right_val as f32)),
+                        BinaryOperator::Equal => Expression::Bool(left_val == (right_val as f32)),
                         _ => unimplemented!("Unknown operator {:?}", operator),
                     },
                     _ => panic!("Invalid types or operation"), // Handle other cases or operations
                 }
-            },
+            }
             Expression::Match(match_) => {
                 let expression = self.evaluate(*match_.value);
                 for case in match_.patterns {
@@ -140,6 +146,7 @@ impl VirtualMachine {
             _ => panic!("Unknown expression {:?}", expression),
         }
     }
+
     pub fn interpret(&mut self, program: Vec<Item>) {
         for statement in program {
             match statement {
@@ -167,7 +174,7 @@ mod tests {
         let mut vm = VirtualMachine::new();
         vm.interpret(ast);
     }
-    
+
     #[test]
     fn test_recursion() {
         let declare = "let factorial:fn = (n:i32):i32 => n ? {

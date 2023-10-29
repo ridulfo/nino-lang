@@ -243,10 +243,13 @@ pub fn parse_factor(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
 
     loop {
         match tokens.peek() {
-            Some(&&TokenKind::Multiplication) | Some(&&TokenKind::Division) => {
+            Some(&&TokenKind::Multiplication)
+            | Some(&&TokenKind::Division)
+            | Some(&&TokenKind::Modulus) => {
                 let operator = match tokens.next() {
                     Some(TokenKind::Multiplication) => BinaryOperator::Multiply,
                     Some(TokenKind::Division) => BinaryOperator::Divide,
+                    Some(TokenKind::Modulus) => BinaryOperator::Modulo,
                     _ => panic!("Expected multiply or divide"),
                 };
                 let right = parse_unary(tokens);
