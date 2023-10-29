@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::lexer::Lexer;
 use crate::parser::{BinaryOperator, Declaration, Expression, Item, Parser};
@@ -31,6 +32,14 @@ impl VirtualMachine {
                             Expression::Bool(val) => println!("{}", val),
                             _ => panic!("Invalid type"),
                         }
+                    }
+                    "time" => {
+                        let start = SystemTime::now();
+                        let since_the_epoch = start
+                            .duration_since(UNIX_EPOCH)
+                            .expect("Time went backwards");
+                        let in_ms = since_the_epoch.as_millis();
+                        return Expression::Float(in_ms as f32);
                     }
                     _ => {
                         // Get the function declaration
