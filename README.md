@@ -50,15 +50,24 @@ Grammar definition can be found in [here](docs/grammar.md).
 Check the [examples](examples) directory for the currently supported syntax.
 
 ```Rust
-let a:i32 = 10;
-let b:i32 = 5;
+let is_prime_helper:fn = (x:i32, i:i32):bool => true ? {
+    x==i => true,
+    x mod i == 0 => false,
+    is_prime_helper(x, i + 1)
+};
 
-print(a);
-print(b);
-print(a + b);
-print(a - b);
-print(a * b);
-print(a / b);
+let is_prime:fn = (x:i32):bool => x ? {
+    1 => false,
+    2 => true,
+    is_prime_helper(x, 2)
+};
+
+print(is_prime(2));
+print(is_prime(3));
+print(is_prime(4));
+print(is_prime(5));
+print(is_prime(6));
+print(is_prime(7));
 ```
 
 ### In the future...
