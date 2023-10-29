@@ -24,6 +24,7 @@ It will not have a garbage collector (TBD 🤨).
 - 2023-10-17: Created compiler program
 - 2023-10-22: Implemented declaring and calling functions. Function calls can be used as values in an expression. The next steps will need to be refactoring and adding unit tests.
 - 2023-10-28: Re-wrote the lexer and parser to rust. Added tons of unit tests. Created an interpreter to run `.ni` files.
+- 2023-10-29: Any programming language's most important features is correctness and safety. No need for more justification.
 
 ## Quick start
 
