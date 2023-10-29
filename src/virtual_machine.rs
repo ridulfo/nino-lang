@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::f32::consts::E;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::lexer::Lexer;
@@ -125,6 +126,16 @@ impl VirtualMachine {
                     },
                     _ => panic!("Invalid types or operation"), // Handle other cases or operations
                 }
+            },
+            Expression::Match(match_) => {
+                let expression = self.evaluate(*match_.value);
+                for case in match_.patterns {
+                    let left = self.evaluate(case.0);
+                    if expression == left {
+                        return self.evaluate(case.1);
+                    }
+                }
+                self.evaluate(*match_.default.unwrap())
             }
             _ => panic!("Unknown expression {:?}", expression),
         }

@@ -31,6 +31,13 @@ pub struct FunctionCall {
     pub arguments: Vec<Expression>,
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Match {
+    pub value: Box<Expression>,
+    pub patterns: Vec<(Expression, Expression)>,
+    pub default: Option<Box<Expression>>,
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum BinaryOperator {
     Add,
@@ -71,6 +78,7 @@ pub enum Expression {
 
     FunctionDeclaration(FunctionDeclaration),
     FunctionCall(FunctionCall),
+    Match(Match),
 
     BinaryOperation(BinaryOperation),
 }
@@ -144,7 +152,7 @@ fn parse_function_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Express
 }
 
 pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
-    match tokens.next() {
+    let expression = match tokens.next() {
         Some(TokenKind::Identifier(name)) => match tokens.peek() {
             Some(&&TokenKind::LeftParen) => {
                 let _ = tokens.next();
@@ -182,7 +190,50 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
             "\nExpected identifier, integer, float, or left paren, got {:?}\n",
             tokens.peek().unwrap()
         ),
+    };
+
+    if tokens.peek() == Some(&&TokenKind::Question) {
+        let _ = tokens.next(); // Consumes question mark
+        let mut patterns = vec![];
+        let mut default = None;
+        match tokens.next() {
+            Some(TokenKind::LeftBrace) => {}
+            _ => panic!("Expected left brace"),
+        }
+        loop {
+            match tokens.peek() {
+                Some(&&TokenKind::RightBrace) => {
+                    let _ = tokens.next();
+                    break;
+                }
+                Some(&&TokenKind::Comma) => {
+                    let _ = tokens.next();
+                }
+                _ => {
+                    let value = parse_expression(tokens);
+                    match tokens.peek() {
+                        Some(TokenKind::RightBrace) => {
+                            default = Some(Box::new(value));
+                            continue;
+                        }
+                        Some(TokenKind::Arrow) => {
+                            let _ = tokens.next(); // Consume arrow
+                        }
+                        _ => panic!("Expected arrow or default"),
+                    };
+                    let expression = parse_expression(tokens);
+                    patterns.push((value, expression));
+                }
+            }
+        }
+        return Expression::Match(Match {
+            value: Box::new(expression),
+            patterns,
+            default,
+        });
     }
+
+    expression
 }
 pub fn parse_unary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
     parse_primary(tokens)
@@ -480,6 +531,51 @@ mod tests {
                         left: Box::new(Expression::Identifier("x".to_string())),
                         right: Box::new(Expression::Identifier("y".to_string())),
                     })),
+                }))
+            })
+        );
+    }
+
+    #[test]
+    fn test_match() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("i32".to_string()),
+            TokenKind::Assignment,
+            TokenKind::Integer(1),
+            TokenKind::Question,
+            TokenKind::LeftBrace,
+            TokenKind::Integer(1),
+            TokenKind::Arrow,
+            TokenKind::Integer(2),
+            TokenKind::Comma,
+            TokenKind::Integer(2),
+            TokenKind::Arrow,
+            TokenKind::Integer(3),
+            TokenKind::Comma,
+            TokenKind::Integer(4),
+            TokenKind::RightBrace,
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+
+        let mut parser = Parser::new(&tokens);
+        let items = parser.parse();
+
+        assert_eq!(
+            items[0],
+            Item::Declaration(Declaration {
+                name: "x".to_string(),
+                type_: Type::Integer,
+                expression: Box::new(Expression::Match(Match {
+                    value: Box::new(Expression::Integer(1)),
+                    patterns: vec![
+                        (Expression::Integer(1), Expression::Integer(2),),
+                        (Expression::Integer(2), Expression::Integer(3),),
+                    ],
+                    default: Some(Box::new(Expression::Integer(4))),
                 }))
             })
         );

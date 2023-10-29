@@ -368,6 +368,42 @@ mod tests {
     }
 
     #[test]
+    fn test_match_expression(){
+        let input = "let x:i32 = 1 ? {
+    1 => 2,
+    2 => 3,
+    4
+};";
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+        assert_eq!(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("i32".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Integer(1),
+                TokenKind::Question,
+                TokenKind::LeftBrace,
+                TokenKind::Integer(1),
+                TokenKind::Arrow,
+                TokenKind::Integer(2),
+                TokenKind::Comma,
+                TokenKind::Integer(2),
+                TokenKind::Arrow,
+                TokenKind::Integer(3),
+                TokenKind::Comma,
+                TokenKind::Integer(4),
+                TokenKind::RightBrace,
+                TokenKind::Semicolon,
+                TokenKind::EOF,
+            ]
+        );
+    }
+
+    #[test]
     fn test_is_prime() {
         let input = "let is_prime:fn = (x:i32):bool =>
     | let sqrt_x:f32 = sqrt(x);
