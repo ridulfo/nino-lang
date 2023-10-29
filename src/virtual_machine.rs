@@ -32,6 +32,7 @@ impl VirtualMachine {
                             Expression::Bool(val) => println!("{}", val),
                             _ => panic!("Invalid type"),
                         }
+                        return arg
                     }
                     "time" => {
                         let start = SystemTime::now();
