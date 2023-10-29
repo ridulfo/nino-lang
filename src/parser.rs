@@ -14,16 +14,15 @@ pub enum Type {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionParameter {
-    name: String,
-    type_: Type,
+    pub name: String,
+    pub type_: Type,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionDeclaration {
-    name: String,
-    parameters: Vec<FunctionParameter>,
-    return_type: Type,
-    expression: Box<Expression>,
+    pub parameters: Vec<FunctionParameter>,
+    pub return_type: Type,
+    pub expression: Box<Expression>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -82,6 +81,68 @@ pub enum Item {
     Expression(Expression),
 }
 
+fn parse_function_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
+    // match tokens.peek() {
+    //     Some(TokenKind::LeftParen) => {}
+    //     _ => panic!("Expected left paren"),
+    // };
+    let mut arguments = vec![];
+    loop {
+        match tokens.peek() {
+            Some(&&TokenKind::RightParen) => {
+                let _ = tokens.next();
+                break;
+            }
+            Some(&&TokenKind::Comma) => {
+                let _ = tokens.next();
+            }
+            _ => {
+                let name = match tokens.next() {
+                    Some(TokenKind::Identifier(name)) => name.clone(),
+                    _ => panic!("Expected identifier"),
+                };
+                match tokens.next() {
+                    Some(TokenKind::Colon) => {}
+                    _ => panic!("Expected colon"),
+                };
+                let type_ = match tokens.next() {
+                    Some(TokenKind::Type(type_)) => match type_.as_str() {
+                        "i32" => Type::Integer,
+                        "f32" => Type::Float,
+                        "bool" => Type::Boolean,
+                        _ => panic!("Unknown type"),
+                    },
+                    _ => panic!("Expected type"),
+                };
+                arguments.push(FunctionParameter { name, type_ });
+            }
+        }
+    }
+    match tokens.next() {
+        Some(TokenKind::Colon) => {}
+        _ => panic!("Expected colon"),
+    };
+    let return_type = match tokens.next() {
+        Some(TokenKind::Type(type_)) => match type_.as_str() {
+            "i32" => Type::Integer,
+            "f32" => Type::Float,
+            "bool" => Type::Boolean,
+            _ => panic!("Unknown type"),
+        },
+        _ => panic!("Expected type"),
+    };
+    match tokens.next() {
+        Some(TokenKind::Arrow) => {}
+        _ => panic!("Expected arrow"),
+    };
+    let expression = parse_expression(tokens);
+    Expression::FunctionDeclaration(FunctionDeclaration {
+        parameters: arguments,
+        return_type,
+        expression: Box::new(expression),
+    })
+}
+
 pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
     match tokens.next() {
         Some(TokenKind::Identifier(name)) => match tokens.peek() {
@@ -110,6 +171,10 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
             }
             _ => Expression::Identifier(name.clone()),
         },
+        Some(TokenKind::LeftParen) => {
+            // Parsing (identifier:type, identifier:type) => expression
+            parse_function_declaration(tokens)
+        }
         Some(TokenKind::Integer(value)) => Expression::Integer(*value),
         Some(TokenKind::Float(value)) => Expression::Float(*value),
         Some(TokenKind::Bool(value)) => Expression::Bool(*value),
@@ -246,6 +311,7 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
             "i32" => Type::Integer,
             "f32" => Type::Float,
             "bool" => Type::Boolean,
+            "fn" => Type::Function,
             _ => panic!("Unknown type"),
         },
         _ => panic!("Expected type"),
@@ -359,6 +425,62 @@ mod tests {
             Expression::FunctionCall(FunctionCall {
                 name: "print".to_string(),
                 arguments: vec![Expression::Integer(1)],
+            })
+        );
+    }
+
+    #[test]
+    fn test_function_declaration() {
+        // Testing "let add:fn = (x:i32, y:i32):i32 => x+y;"
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("add".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("fn".to_string()),
+            TokenKind::Assignment,
+            TokenKind::LeftParen,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("i32".to_string()),
+            TokenKind::Comma,
+            TokenKind::Identifier("y".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("i32".to_string()),
+            TokenKind::RightParen,
+            TokenKind::Colon,
+            TokenKind::Type("i32".to_string()),
+            TokenKind::Arrow,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Addition,
+            TokenKind::Identifier("y".to_string()),
+            TokenKind::Semicolon,
+        ];
+
+        let mut parser = Parser::new(&tokens);
+        let items = parser.parse();
+        assert_eq!(
+            items[0],
+            Item::Declaration(Declaration {
+                name: "add".to_string(),
+                type_: Type::Function,
+                expression: Box::new(Expression::FunctionDeclaration(FunctionDeclaration {
+                    parameters: vec![
+                        FunctionParameter {
+                            name: "x".to_string(),
+                            type_: Type::Integer,
+                        },
+                        FunctionParameter {
+                            name: "y".to_string(),
+                            type_: Type::Integer,
+                        }
+                    ],
+                    return_type: Type::Integer,
+                    expression: Box::new(Expression::BinaryOperation(BinaryOperation {
+                        operator: BinaryOperator::Add,
+                        left: Box::new(Expression::Identifier("x".to_string())),
+                        right: Box::new(Expression::Identifier("y".to_string())),
+                    })),
+                }))
             })
         );
     }
