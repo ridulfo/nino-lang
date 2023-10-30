@@ -23,26 +23,23 @@ It will not have a garbage collector (TBD 🤨).
 - 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
 - 2023-10-17: Created compiler program
 - 2023-10-22: Implemented declaring and calling functions. Function calls can be used as values in an expression. The next steps will need to be refactoring and adding unit tests.
+- 2023-10-28: Re-wrote the lexer and parser to rust. Added tons of unit tests. Created an interpreter to run `.ni` files.
+- 2023-10-29: Any programming language's most important features is correctness and safety. No need for more justification.
 
 ## Quick start
 
-**Compile the compiler**
+**Compile the interpreter**
 
 ```Bash
-make
-```
-
-**Compile an example program**
-
-```Bash
-./ninoc examples/print-sum.ni
+cargo build --release && mv target/release/ninoi .
 ```
 
 **Run the example program**
 
 ```Bash
-./print-sum
+./ninoi examples/print-sum.ni
 ```
+
 
 ## Syntax
 
@@ -53,15 +50,24 @@ Grammar definition can be found in [here](docs/grammar.md).
 Check the [examples](examples) directory for the currently supported syntax.
 
 ```Rust
-let inc:fn = (x:i32):i32=>x+1;
-
-let b:i32 = func(2) ? {
-    2 => 3,
-    3 => 4,
-    4 => 5,
+let is_prime_helper:fn = (x:i32, i:i32):bool => true ? {
+    x==i => true,
+    x mod i == 0 => false,
+    is_prime_helper(x, i + 1)
 };
 
-print(b);
+let is_prime:fn = (x:i32):bool => x ? {
+    1 => false,
+    2 => true,
+    is_prime_helper(x, 2)
+};
+
+print(is_prime(2));
+print(is_prime(3));
+print(is_prime(4));
+print(is_prime(5));
+print(is_prime(6));
+print(is_prime(7));
 ```
 
 ### In the future...

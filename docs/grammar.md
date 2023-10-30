@@ -24,7 +24,7 @@ expression -> equality
 equality -> comparison ( ( "!=" | "==" ) comparison )*
 comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
 term -> factor ( ( "-" | "+" ) factor )*
-factor -> unary ( ( "/" | "*" ) unary )*
+factor -> unary ( ( "/" | "*" | "mod" ) unary )*
 unary -> ( "!" | "-" ) unary | primary
 primary -> number | string | "true" | "false" | "nil" | "(" expression ")" | identifier | function | function_call | pattern_matching
 
