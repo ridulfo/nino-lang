@@ -162,17 +162,23 @@ impl VirtualMachine {
 }
 #[cfg(test)]
 mod tests {
+    use crate::parser::BinaryOperation;
+
     use super::*;
 
     #[test]
-    fn test_interpret() {
-        let input = "3;";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
-        let mut parser = Parser::new(&tokens);
-        let ast = parser.parse();
-        let mut vm = VirtualMachine::new();
-        vm.interpret(ast);
+    fn test_expression() {
+        // Test adding two integers
+        let expression = Expression::BinaryOperation(BinaryOperation {
+            operator: BinaryOperator::Add,
+            left: Box::new(Expression::Integer(1)),
+            right: Box::new(Expression::Integer(2)),
+        });
+
+        let vm = VirtualMachine::new();
+        let result = vm.evaluate(expression);
+
+        assert_eq!(result, Expression::Integer(3));
     }
 
     #[test]
