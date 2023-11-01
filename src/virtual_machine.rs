@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::lexer::Lexer;
-use crate::parser::{BinaryOperator, Declaration, Expression, Item, Parser};
+use crate::parser::{BinaryOperator, Declaration, Expression, Item };
 
 pub struct VirtualMachine {
     symbols: HashMap<String, Declaration>,
@@ -14,6 +13,7 @@ impl VirtualMachine {
             symbols: HashMap::new(),
         }
     }
+
     fn evaluate(&self, expression: Expression) -> Expression {
         match expression {
             Expression::Integer(_) | Expression::Float(_) | Expression::Bool(_) => expression,
@@ -61,7 +61,7 @@ impl VirtualMachine {
                             let declaration = Declaration {
                                 name: name.clone(),
                                 type_: type_.clone(),
-                                expression: Box::new(expression).clone(),
+                                expression: Box::new(expression)
                             };
                             local_symbols.insert(name.clone(), declaration);
                         }
@@ -72,7 +72,6 @@ impl VirtualMachine {
                         return vm.evaluate(*function.expression);
                     }
                 }
-                Expression::Integer(0)
             }
             Expression::BinaryOperation(binary) => {
                 let left = self.evaluate(*binary.left);
@@ -162,7 +161,7 @@ impl VirtualMachine {
 }
 #[cfg(test)]
 mod tests {
-    use crate::parser::BinaryOperation;
+    use crate::{parser::{BinaryOperation, Parser}, lexer::Lexer};
 
     use super::*;
 
