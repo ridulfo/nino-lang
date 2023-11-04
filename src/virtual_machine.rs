@@ -71,20 +71,28 @@ fn binary_float_integer(left_val: f32, right_val: i32, operator: BinaryOperator)
 }
 
 fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> Expression {
+    let mut current_expression = expression;
+    let mut current_symbols = symbols.clone();
+
     loop {
-        return match expression {
-            Expression::Integer(_) | Expression::Float(_) | Expression::Bool(_) => expression,
+        return match current_expression {
+            Expression::Integer(_) | Expression::Float(_) | Expression::Bool(_) => {
+                current_expression
+            }
             Expression::Identifier(identifier) => {
-                let declaration = symbols.get(&identifier).unwrap();
+                let declaration = current_symbols.get(&identifier).unwrap();
                 let expression = declaration.expression.clone();
-                return evaluate(*expression, symbols);
+                return evaluate(*expression, &current_symbols);
             }
             Expression::FunctionCall(ref function_call) => match function_call.name.as_str() {
-                "print" => print(evaluate(function_call.arguments[0].clone(), symbols)),
+                "print" => print(evaluate(
+                    function_call.arguments[0].clone(),
+                    &current_symbols,
+                )),
                 "time" => time(),
                 _ => {
                     // Get the function declaration
-                    let declaration = symbols.get(&function_call.name).unwrap();
+                    let declaration = current_symbols.get(&function_call.name).unwrap();
                     // The expression which we know to be a function declaration
                     let function_declaration_expression = (*declaration.expression).clone();
 
@@ -93,24 +101,24 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                         _ => panic!("Invalid function"),
                     };
 
-                    let mut local_symbols: HashMap<String, Declaration> = symbols.clone();
                     for (i, argument) in function_call.arguments.iter().enumerate() {
                         let name = function.parameters[i].name.clone();
                         let type_ = function.parameters[i].type_.clone();
-                        let expression = evaluate(argument.clone(), symbols);
+                        let expression = evaluate(argument.clone(), &current_symbols);
                         let declaration = Declaration {
                             name: name.clone(),
                             type_: type_.clone(),
                             expression: Box::new(expression),
                         };
-                        local_symbols.insert(name.clone(), declaration);
+                        current_symbols.insert(name.clone(), declaration);
                     }
-                    return evaluate(*function.expression, &local_symbols);
+                    current_expression = *function.expression;
+                    continue;
                 }
             },
             Expression::BinaryOperation(binary) => {
-                let left = evaluate(*binary.left, symbols);
-                let right = evaluate(*binary.right, symbols);
+                let left = evaluate(*binary.left, &current_symbols);
+                let right = evaluate(*binary.right, &current_symbols);
                 let operator = binary.operator;
                 return match (left, right) {
                     // Perform operations based on the types and the operator
@@ -131,16 +139,17 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
             }
 
             Expression::Match(match_) => {
-                let expression = evaluate(*match_.value, symbols);
+                let expression = evaluate(*match_.value, &current_symbols);
                 for case in match_.patterns {
-                    let left = evaluate(case.0, symbols);
+                    let left = evaluate(case.0, &current_symbols);
                     if expression == left {
-                        return evaluate(case.1, symbols);
+                        return evaluate(case.1, &current_symbols);
                     }
                 }
-                return evaluate(*match_.default.unwrap(), symbols);
+                current_expression = *match_.default.unwrap();
+                continue;
             }
-            _ => panic!("Unknown expression {:?}", expression),
+            _ => panic!("Unknown expression {:?}", current_expression),
         };
     }
 }
@@ -220,5 +229,23 @@ mod tests {
         vm.interpret(declaration_ast);
         println!("{:?}", vm.symbols);
         vm.interpret(expression);
+    }
+
+    #[test]
+    fn tail_optimization() {
+        let declare = "let increment:fn = (x:i32, i:i32):i32 => i ? {
+    0 => x,
+    increment(x + 1, i - 1)
+};
+
+print(increment(0, 20000));";
+        let mut lexer = Lexer::new(declare);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let program = parser.parse();
+
+        let mut vm = VirtualMachine::new();
+
+        vm.interpret(program);
     }
 }

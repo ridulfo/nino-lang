@@ -10,10 +10,10 @@ let is_prime:fn = (x:i32):bool => x ? {
     is_prime_helper(x, 2)
 };
 
-print(is_prime(1));
-print(is_prime(2));
-print(is_prime(3));
-print(is_prime(4));
-print(is_prime(5));
-print(is_prime(6));
-print(is_prime(7));
+let print_primes:fn = (current:i32, end:i32):i32 => true ? {
+    current == end => 0,
+    is_prime(current) => print_primes(print(current)+1 , end),
+    print_primes(current + 1, end)
+};
+
+print(print_primes(10000, 10100));
