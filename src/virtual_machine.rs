@@ -30,6 +30,10 @@ fn binary_integer_integer(left_val: i32, right_val: i32, operator: BinaryOperato
         BinaryOperator::Divide => Expression::Float((left_val as f32) / (right_val as f32)),
         BinaryOperator::Modulo => Expression::Integer(left_val % right_val),
         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
+        BinaryOperator::GreaterThan => Expression::Bool(left_val > right_val),
+        BinaryOperator::LessThan => Expression::Bool(left_val < right_val),
+        BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= right_val),
+        BinaryOperator::LessEqualThan => Expression::Bool(left_val <= right_val),
         _ => unimplemented!("Unknown operator {:?}", operator),
     }
 }
@@ -42,6 +46,10 @@ fn binary_float_float(left_val: f32, right_val: f32, operator: BinaryOperator) -
         BinaryOperator::Divide => Expression::Float(left_val / right_val),
         BinaryOperator::Modulo => Expression::Float(left_val % right_val),
         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
+        BinaryOperator::GreaterThan => Expression::Bool(left_val > right_val),
+        BinaryOperator::LessThan => Expression::Bool(left_val < right_val),
+        BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= right_val),
+        BinaryOperator::LessEqualThan => Expression::Bool(left_val <= right_val),
         _ => unimplemented!("Unknown operator {:?}", operator),
     }
 }
@@ -54,6 +62,10 @@ fn binary_integer_float(left_val: i32, right_val: f32, operator: BinaryOperator)
         BinaryOperator::Divide => Expression::Float((left_val as f32) / right_val),
         BinaryOperator::Modulo => Expression::Float((left_val as f32) % right_val),
         BinaryOperator::Equal => Expression::Bool(left_val == (right_val as i32)),
+        BinaryOperator::GreaterThan => Expression::Bool((left_val as f32) > right_val),
+        BinaryOperator::LessThan => Expression::Bool((left_val as f32) < right_val),
+        BinaryOperator::GreaterEqualThan => Expression::Bool((left_val as f32) >= right_val),
+        BinaryOperator::LessEqualThan => Expression::Bool((left_val as f32) <= right_val),
         _ => unimplemented!("Unknown operator {:?}", operator),
     }
 }
@@ -66,6 +78,10 @@ fn binary_float_integer(left_val: f32, right_val: i32, operator: BinaryOperator)
         BinaryOperator::Divide => Expression::Float(left_val / (right_val as f32)),
         BinaryOperator::Modulo => Expression::Float(left_val % (right_val as f32)),
         BinaryOperator::Equal => Expression::Bool(left_val == (right_val as f32)),
+        BinaryOperator::GreaterThan => Expression::Bool(left_val > (right_val as f32)),
+        BinaryOperator::LessThan => Expression::Bool(left_val < (right_val as f32)),
+        BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= (right_val as f32)),
+        BinaryOperator::LessEqualThan => Expression::Bool(left_val <= (right_val as f32)),
         _ => unimplemented!("Unknown operator {:?}", operator),
     }
 }
