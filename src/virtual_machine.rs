@@ -106,6 +106,14 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                     &current_symbols,
                 )),
                 "time" => time(),
+                "sqrt" => {
+                    let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
+                    match expression {
+                        Expression::Integer(val) => Expression::Float((val as f32).sqrt()),
+                        Expression::Float(val) => Expression::Float(val.sqrt()),
+                        _ => panic!("Invalid type"),
+                    }
+                }
                 _ => {
                     // Get the function declaration
                     let declaration = current_symbols.get(&function_call.name).unwrap();
