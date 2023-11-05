@@ -198,6 +198,14 @@ impl VirtualMachine {
         for statement in program {
             match statement {
                 Item::Declaration(declaration) => {
+                    let declaration = match *declaration.expression {
+                        Expression::FunctionDeclaration(_) => declaration,
+                        _ => Declaration {
+                            name: declaration.name.clone(),
+                            type_: declaration.type_.clone(),
+                            expression: Box::new(evaluate(*declaration.expression, &self.symbols)),
+                        },
+                    };
                     self.symbols.insert(declaration.name.clone(), declaration);
                 }
                 Item::Expression(expression) => {
