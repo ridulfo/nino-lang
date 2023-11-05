@@ -98,7 +98,8 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
             Expression::Identifier(identifier) => {
                 let declaration = current_symbols.get(&identifier).unwrap();
                 let expression = declaration.expression.clone();
-                return evaluate(*expression, &current_symbols);
+                current_expression = *expression;
+                continue;
             }
             Expression::FunctionCall(ref function_call) => match function_call.name.as_str() {
                 "print" => print(evaluate(
@@ -206,6 +207,7 @@ impl VirtualMachine {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use crate::{
