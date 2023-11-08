@@ -168,6 +168,15 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                     (Expression::Float(left_val), Expression::Integer(right_val)) => {
                         binary_float_integer(left_val, right_val, operator)
                     }
+                    (Expression::Array(left_val), Expression::Array(right_val)) => match operator {
+                        BinaryOperator::Equal => Expression::Bool(left_val == right_val),
+                        BinaryOperator::Add => {
+                            let mut result = left_val.clone();
+                            result.extend(right_val.clone());
+                            Expression::Array(result)
+                        }
+                        _ => panic!("Invalid operation"),
+                    },
                     _ => panic!("Invalid types or operation"), // Handle other cases or operations
                 };
             }
@@ -272,6 +281,22 @@ mod tests {
         vm.interpret(declaration_ast);
         println!("{:?}", vm.symbols);
         vm.interpret(expression);
+    }
+
+    #[test]
+    fn test_array_operations() {
+        let declare = "let array:[i32] = [1, 2, 3, 4, 5];
+        let array2:[i32] = [6, 7, 8, 9, 10];
+        let array3:[i32] = array + array2;
+        print(array3);";
+        let mut lexer = Lexer::new(declare);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let program = parser.parse();
+
+        let mut vm = VirtualMachine::new();
+
+        vm.interpret(program);
     }
 
     #[test]
