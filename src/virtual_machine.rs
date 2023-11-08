@@ -4,10 +4,18 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::parser::{BinaryOperator, Declaration, Expression, Item};
 
 fn print(expression: Expression) -> Expression {
-    match expression {
+    match &expression {
         Expression::Integer(val) => println!("{}", val),
         Expression::Float(val) => println!("{}", val),
         Expression::Bool(val) => println!("{}", val),
+        Expression::Array(val) => {
+            println!("[");
+            val.iter().for_each(|x| {
+                print!("  ");
+                print(x.clone());
+            });
+            println!("]");
+        }
         _ => panic!("Invalid type"),
     }
     return expression;
@@ -92,9 +100,10 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
 
     loop {
         return match current_expression {
-            Expression::Integer(_) | Expression::Float(_) | Expression::Bool(_) => {
-                current_expression
-            }
+            Expression::Integer(_)
+            | Expression::Float(_)
+            | Expression::Bool(_)
+            | Expression::Array(_) => current_expression,
             Expression::Identifier(identifier) => {
                 let declaration = current_symbols.get(&identifier).unwrap();
                 let expression = declaration.expression.clone();

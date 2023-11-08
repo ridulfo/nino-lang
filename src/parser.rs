@@ -10,6 +10,8 @@ pub enum Type {
     Float,
     Boolean,
     Function,
+    String,
+    Array(Box<Type>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -75,6 +77,8 @@ pub enum Expression {
     Integer(i32),
     Float(f32),
     Bool(bool),
+
+    Array(Vec<Expression>),
 
     FunctionDeclaration(FunctionDeclaration),
     FunctionCall(FunctionCall),
@@ -186,6 +190,25 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
         Some(TokenKind::Integer(value)) => Expression::Integer(*value),
         Some(TokenKind::Float(value)) => Expression::Float(*value),
         Some(TokenKind::Bool(value)) => Expression::Bool(*value),
+        Some(TokenKind::LeftBracket) => {
+            let mut elements = vec![];
+            loop {
+                match tokens.peek() {
+                    Some(&&TokenKind::RightBracket) => {
+                        let _ = tokens.next();
+                        break;
+                    }
+                    Some(&&TokenKind::Comma) => {
+                        let _ = tokens.next();
+                    }
+                    _ => {
+                        let expression = parse_expression(tokens);
+                        elements.push(expression);
+                    }
+                }
+            }
+            Expression::Array(elements)
+        }
         _ => panic!(
             "\nExpected identifier, integer, float, or left paren, got {:?}\n",
             tokens.peek().unwrap()
@@ -366,6 +389,7 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
             "f32" => Type::Float,
             "bool" => Type::Boolean,
             "fn" => Type::Function,
+            "[i32]" => Type::Array(Box::new(Type::Integer)),
             _ => panic!("Unknown type"),
         },
         _ => panic!("Expected type"),
@@ -580,6 +604,43 @@ mod tests {
                     ],
                     default: Some(Box::new(Expression::Integer(4))),
                 }))
+            })
+        );
+    }
+
+    #[test]
+    fn test_array() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("[i32]".to_string()),
+            TokenKind::Assignment,
+            TokenKind::LeftBracket,
+            TokenKind::Integer(1),
+            TokenKind::Comma,
+            TokenKind::Integer(2),
+            TokenKind::Comma,
+            TokenKind::Integer(3),
+            TokenKind::RightBracket,
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+        
+        let mut parser = Parser::new(&tokens);
+        let items = parser.parse();
+        
+
+        assert_eq!(
+            items[0],
+            Item::Declaration(Declaration {
+                name: "x".to_string(),
+                type_: Type::Array(Box::new(Type::Integer)),
+                expression: Box::new(Expression::Array(vec![
+                    Expression::Integer(1),
+                    Expression::Integer(2),
+                    Expression::Integer(3),
+                ]))
             })
         );
     }

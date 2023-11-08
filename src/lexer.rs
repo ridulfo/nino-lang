@@ -110,7 +110,7 @@ fn parse_type(chars: &mut Peekable<Chars>) -> TokenKind {
     let mut string = String::new();
     while let Some(&c) = chars.peek() {
         match c {
-            'a'..='z' | '0'..='9' | '_' => string.push(c),
+            'a'..='z' | '0'..='9' | '_' | '[' | ']' => string.push(c),
             _ => break,
         }
         chars.next();
@@ -361,6 +361,32 @@ mod tests {
                 TokenKind::Integer(2),
                 TokenKind::Equal,
                 TokenKind::Bool(true),
+                TokenKind::Semicolon,
+                TokenKind::EOF,
+            ]
+        );
+    }
+
+    #[test]
+    fn test_array(){
+        let input = "let x:[i32] = [1,2,3];";
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+        assert_eq!(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("[i32]".to_string()),
+                TokenKind::Assignment,
+                TokenKind::LeftBracket,
+                TokenKind::Integer(1),
+                TokenKind::Comma,
+                TokenKind::Integer(2),
+                TokenKind::Comma,
+                TokenKind::Integer(3),
+                TokenKind::RightBracket,
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ]
