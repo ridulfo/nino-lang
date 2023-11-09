@@ -237,6 +237,15 @@ impl<'a> Lexer<'a> {
                 '*' => TokenKind::Multiplication,
                 '/' => TokenKind::Division,
                 '?' => TokenKind::Question,
+                '#' => {
+                    while let Some(&c) = self.chars.peek() {
+                        if c == '\n' {
+                            break;
+                        }
+                        self.chars.next();
+                    }
+                    continue;
+                }
                 _ => panic!("Unexpected character: {}", c),
             };
             tokens.push(token);
@@ -368,7 +377,7 @@ mod tests {
     }
 
     #[test]
-    fn test_array(){
+    fn test_array() {
         let input = "let x:[i32] = [1,2,3];";
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
@@ -394,7 +403,37 @@ mod tests {
     }
 
     #[test]
-    fn test_match_expression(){
+    fn test_comment() {
+        let input = "let x:i32 = 1; # This is a comment
+let y:i32 = 2; # This is another comment";
+
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+
+        compare_tokens(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("i32".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Integer(1),
+                TokenKind::Semicolon,
+                TokenKind::Let,
+                TokenKind::Identifier("y".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("i32".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Integer(2),
+                TokenKind::Semicolon,
+                TokenKind::EOF,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_match_expression() {
         let input = "let x:i32 = 1 ? {
     1 => 2,
     2 => 3,
