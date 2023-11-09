@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::mem::discriminant;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::parser::{BinaryOperator, Declaration, Expression, Item};
@@ -185,7 +186,10 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                 let expression = evaluate(*match_.value, &current_symbols);
                 for case in match_.patterns {
                     let left = evaluate(case.0, &current_symbols);
-                    if expression == left {
+                    // TODO: perform this check in the parser
+                    if discriminant(&expression) != discriminant(&left) {
+                        panic!("Invalid types: {:?} and {:?}", expression, left);
+                    } else if expression == left {
                         return evaluate(case.1, &current_symbols);
                     }
                 }
