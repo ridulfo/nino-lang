@@ -97,6 +97,7 @@ fn parse_string(chars: &mut Peekable<Chars>) -> TokenKind {
     let mut string = String::new();
     while let Some(&c) = chars.peek() {
         if c == '"' {
+            chars.next();
             break;
         }
         string.push(c);
@@ -465,6 +466,27 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ]
+        );
+    }
+
+    #[test]
+    fn test_string(){
+        let input = "let x:[u8] = \"hello world\";";
+        let mut lexer = Lexer::new(input);
+        let tokens = lexer.tokenize();
+
+        compare_tokens(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("[u8]".to_string()),
+                TokenKind::Assignment,
+                TokenKind::String("hello world".to_string()),
+                TokenKind::Semicolon,
+                TokenKind::EOF,
+            ],
         );
     }
 
