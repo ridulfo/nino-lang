@@ -72,13 +72,25 @@ pub struct Declaration {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct Array {
+    pub type_: Type,
+    pub elements: Vec<Expression>,
+}
+
+impl Array {
+    fn new(type_: Type, elements: Vec<Expression>) -> Self {
+        Self { type_, elements }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Identifier(String),
     Integer(i32),
     Float(f32),
     Bool(bool),
 
-    Array(Vec<Expression>),
+    Array(Array),
 
     FunctionDeclaration(FunctionDeclaration),
     FunctionCall(FunctionCall),
@@ -190,6 +202,13 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
         Some(TokenKind::Integer(value)) => Expression::Integer(*value),
         Some(TokenKind::Float(value)) => Expression::Float(*value),
         Some(TokenKind::Bool(value)) => Expression::Bool(*value),
+        Some(TokenKind::String(value)) => Expression::Array(Array::new(
+            Type::Array(Box::new(Type::Integer)),
+            value
+                .chars()
+                .map(|c| Expression::Integer(c as i32))
+                .collect(),
+        )),
         Some(TokenKind::LeftBracket) => {
             let mut elements = vec![];
             loop {
@@ -207,7 +226,7 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
                     }
                 }
             }
-            Expression::Array(elements)
+            Expression::Array(Array::new(Type::Array(Box::new(Type::Integer)), elements))
         }
         _ => panic!(
             "\nExpected identifier, integer, float, or left paren, got {:?}\n",
@@ -390,6 +409,7 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
             "bool" => Type::Boolean,
             "fn" => Type::Function,
             "[i32]" => Type::Array(Box::new(Type::Integer)),
+            "[u8]" => Type::Array(Box::new(Type::Integer)),
             _ => panic!("Unknown type"),
         },
         _ => panic!("Expected type"),
@@ -398,7 +418,9 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
         Some(TokenKind::Assignment) => {}
         _ => panic!("Expected equal, got {:?}", tokens.peek()),
     };
+
     let expression = parse_expression(tokens);
+
     match tokens.next() {
         Some(TokenKind::Semicolon) => {}
         _ => panic!("Expected semicolon"),
@@ -626,21 +648,57 @@ mod tests {
             TokenKind::Semicolon,
             TokenKind::EOF,
         ];
-        
+
         let mut parser = Parser::new(&tokens);
         let items = parser.parse();
-        
 
         assert_eq!(
             items[0],
             Item::Declaration(Declaration {
                 name: "x".to_string(),
                 type_: Type::Array(Box::new(Type::Integer)),
-                expression: Box::new(Expression::Array(vec![
-                    Expression::Integer(1),
-                    Expression::Integer(2),
-                    Expression::Integer(3),
-                ]))
+                expression: Box::new(Expression::Array(Array::new(
+                    Type::Array(Box::new(Type::Integer)),
+                    vec![
+                        Expression::Integer(1),
+                        Expression::Integer(2),
+                        Expression::Integer(3),
+                    ]
+                )))
+            })
+        );
+    }
+
+    #[test]
+    fn test_string() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("[u8]".to_string()),
+            TokenKind::Assignment,
+            TokenKind::String("nino".to_string()),
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+
+        let mut parser = Parser::new(&tokens);
+        let items = parser.parse();
+
+        assert_eq!(
+            items[0],
+            Item::Declaration(Declaration {
+                name: "x".to_string(),
+                type_: Type::Array(Box::new(Type::Integer)),
+                expression: Box::new(Expression::Array(Array::new(
+                    Type::Array(Box::new(Type::Integer)),
+                    vec![
+                        Expression::Integer('n' as i32),
+                        Expression::Integer('i' as i32),
+                        Expression::Integer('n' as i32),
+                        Expression::Integer('o' as i32),
+                    ]
+                )))
             })
         );
     }

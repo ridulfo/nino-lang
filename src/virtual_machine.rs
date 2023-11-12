@@ -2,20 +2,66 @@ use std::collections::HashMap;
 use std::mem::discriminant;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::parser::{BinaryOperator, Declaration, Expression, Item};
+use crate::parser::{BinaryOperator, Declaration, Expression, Item, Type};
 
 fn print(expression: Expression) -> Expression {
     match &expression {
         Expression::Integer(val) => println!("{}", val),
         Expression::Float(val) => println!("{}", val),
         Expression::Bool(val) => println!("{}", val),
-        Expression::Array(val) => {
-            println!("[");
-            val.iter().for_each(|x| {
-                print!("  ");
-                print(x.clone());
-            });
-            println!("]");
+        Expression::Array(arr) => {
+            let type_ = arr.type_.clone();
+            match type_ {
+                Type::Array(type_) => match *type_ {
+                    Type::Integer => {
+                        let mut result = String::from("[");
+                        for (i, element) in arr.elements.iter().enumerate() {
+                            let value = match element {
+                                Expression::Integer(val) => val.to_string(),
+                                _ => panic!("Invalid type"),
+                            };
+                            result.push_str(&value);
+                            if i != arr.elements.len() - 1 {
+                                result.push_str(", ");
+                            }
+                        }
+                        result.push_str("]");
+                        println!("{}", result);
+                    }
+                    Type::Float => {
+                        let mut result = String::from("[");
+                        for (i, element) in arr.elements.iter().enumerate() {
+                            let value = match element {
+                                Expression::Float(val) => val.to_string(),
+                                _ => panic!("Invalid type"),
+                            };
+                            result.push_str(&value);
+                            if i != arr.elements.len() - 1 {
+                                result.push_str(", ");
+                            }
+                        }
+                        result.push_str("]");
+                        println!("{}", result);
+                    }
+                    Type::Boolean => {
+                        let mut result = String::from("[");
+                        for (i, element) in arr.elements.iter().enumerate() {
+                            let value = match element {
+                                Expression::Bool(val) => val.to_string(),
+                                _ => panic!("Invalid type"),
+                            };
+                            result.push_str(&value);
+                            if i != arr.elements.len() - 1 {
+                                result.push_str(", ");
+                            }
+                        }
+                        result.push_str("]");
+                        println!("{}", result);
+                    }
+                    _ => panic!("Invalid type"),
+                },
+                _ => panic!("Invalid type"),
+            }
         }
         _ => panic!("Invalid type"),
     }
@@ -173,7 +219,7 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
                         BinaryOperator::Add => {
                             let mut result = left_val.clone();
-                            result.extend(right_val.clone());
+                            result.elements.extend(right_val.elements);
                             Expression::Array(result)
                         }
                         _ => panic!("Invalid operation"),
@@ -300,6 +346,19 @@ mod tests {
 
         let mut vm = VirtualMachine::new();
 
+        vm.interpret(program);
+    }
+
+    #[test]
+    fn test_string() {
+        let declare = "let string:[u8] = \"Hello, World!\";";
+
+        let mut lexer = Lexer::new(declare);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let program = parser.parse();
+
+        let mut vm = VirtualMachine::new();
         vm.interpret(program);
     }
 
