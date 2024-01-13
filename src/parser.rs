@@ -6,11 +6,10 @@ use crate::lexer::TokenKind;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Type {
-    Integer,
-    Float,
+    Number,
+    Char,
     Boolean,
     Function,
-    String,
     Array(Box<Type>),
 }
 
@@ -72,25 +71,14 @@ pub struct Declaration {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Array {
-    pub type_: Type,
-    pub elements: Vec<Expression>,
-}
-
-impl Array {
-    fn new(type_: Type, elements: Vec<Expression>) -> Self {
-        Self { type_, elements }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Identifier(String),
-    Integer(i32),
-    Float(f32),
+
+    Number(f64),
+    Char(u8),
     Bool(bool),
 
-    Array(Array),
+    Array(Type, Vec<Expression>),
 
     FunctionDeclaration(FunctionDeclaration),
     FunctionCall(FunctionCall),
@@ -106,10 +94,6 @@ pub enum Item {
 }
 
 fn parse_function_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
-    // match tokens.peek() {
-    //     Some(TokenKind::LeftParen) => {}
-    //     _ => panic!("Expected left paren"),
-    // };
     let mut arguments = vec![];
     loop {
         match tokens.peek() {
@@ -131,10 +115,10 @@ fn parse_function_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Express
                 };
                 let type_ = match tokens.next() {
                     Some(TokenKind::Type(type_)) => match type_.as_str() {
-                        "i32" => Type::Integer,
-                        "f32" => Type::Float,
+                        "num" => Type::Number,
+                        "char" => Type::Char,
                         "bool" => Type::Boolean,
-                        _ => panic!("Unknown type"),
+                        _ => panic!("Unknown type: {:?}", type_),
                     },
                     _ => panic!("Expected type"),
                 };
@@ -148,10 +132,10 @@ fn parse_function_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Express
     };
     let return_type = match tokens.next() {
         Some(TokenKind::Type(type_)) => match type_.as_str() {
-            "i32" => Type::Integer,
-            "f32" => Type::Float,
+            "num" => Type::Number,
+            "char" => Type::Char,
             "bool" => Type::Boolean,
-            _ => panic!("Unknown type"),
+            _ => panic!("Unknown type: {:?}", type_),
         },
         _ => panic!("Expected type"),
     };
@@ -199,16 +183,12 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
             // Parsing (identifier:type, identifier:type) => expression
             parse_function_declaration(tokens)
         }
-        Some(TokenKind::Integer(value)) => Expression::Integer(*value),
-        Some(TokenKind::Float(value)) => Expression::Float(*value),
-        Some(TokenKind::Bool(value)) => Expression::Bool(*value),
-        Some(TokenKind::String(value)) => Expression::Array(Array::new(
-            Type::Array(Box::new(Type::Integer)),
-            value
-                .chars()
-                .map(|c| Expression::Integer(c as i32))
-                .collect(),
-        )),
+        Some(TokenKind::Number(value)) => Expression::Number(*value),
+        Some(TokenKind::Character(value)) => Expression::Char(*value),
+        Some(TokenKind::String(value)) => Expression::Array(
+            Type::Char,
+            value.chars().map(|c| Expression::Char(c as u8)).collect(),
+        ),
         Some(TokenKind::LeftBracket) => {
             let mut elements = vec![];
             loop {
@@ -226,7 +206,7 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
                     }
                 }
             }
-            Expression::Array(Array::new(Type::Array(Box::new(Type::Integer)), elements))
+            Expression::Array(Type::Number, elements)
         }
         _ => panic!(
             "\nExpected identifier, integer, float, or left paren, got {:?}\n",
@@ -404,13 +384,15 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
     };
     let type_ = match tokens.next() {
         Some(TokenKind::Type(type_)) => match type_.as_str() {
-            "i32" => Type::Integer,
-            "f32" => Type::Float,
-            "bool" => Type::Boolean,
+            "num" => Type::Number,
+            "char" => Type::Char,
             "fn" => Type::Function,
-            "[i32]" => Type::Array(Box::new(Type::Integer)),
-            "[u8]" => Type::Array(Box::new(Type::Integer)),
-            _ => panic!("Unknown type"),
+            "bool" => Type::Boolean,
+            "[num]" => Type::Array(Box::new(Type::Number)),
+            "[bool]" => Type::Array(Box::new(Type::Boolean)),
+            "[char]" => Type::Array(Box::new(Type::Char)),
+
+            _ => panic!("Unknown type: {:?}", type_),
         },
         _ => panic!("Expected type"),
     };
@@ -470,14 +452,14 @@ mod tests {
 
     #[test]
     fn test_parse_declaration() {
-        // Testing "let x:i32 = 3;"
+        // Testing "let x:num = 3;"
         let tokens = vec![
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
-            TokenKind::Type("i32".to_string()),
+            TokenKind::Type("num".to_string()),
             TokenKind::Assignment,
-            TokenKind::Integer(3),
+            TokenKind::Number(3.0),
             TokenKind::Semicolon,
         ];
         let declaration = parse_declaration(&mut tokens.iter().peekable());
@@ -485,8 +467,8 @@ mod tests {
             declaration,
             Declaration {
                 name: "x".to_string(),
-                type_: Type::Integer,
-                expression: Box::new(Expression::Integer(3)),
+                type_: Type::Number,
+                expression: Box::new(Expression::Number(3.0)),
             }
         );
     }
@@ -494,9 +476,9 @@ mod tests {
     #[test]
     fn test_equality() {
         let tokens = vec![
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
             TokenKind::Equal,
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
         ];
         let mut parser = Parser::new(&tokens);
         let expression = parse_equality(&mut parser.tokens);
@@ -504,8 +486,8 @@ mod tests {
             expression,
             Expression::BinaryOperation(BinaryOperation {
                 operator: BinaryOperator::Equal,
-                left: Box::new(Expression::Integer(1)),
-                right: Box::new(Expression::Integer(1)),
+                left: Box::new(Expression::Number(1.0)),
+                right: Box::new(Expression::Number(1.0)),
             })
         );
     }
@@ -515,7 +497,7 @@ mod tests {
         let tokens = vec![
             TokenKind::Identifier("print".to_string()),
             TokenKind::LeftParen,
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
             TokenKind::RightParen,
         ];
         let mut parser = Parser::new(&tokens);
@@ -524,14 +506,14 @@ mod tests {
             expression,
             Expression::FunctionCall(FunctionCall {
                 name: "print".to_string(),
-                arguments: vec![Expression::Integer(1)],
+                arguments: vec![Expression::Number(1.0)],
             })
         );
     }
 
     #[test]
     fn test_function_declaration() {
-        // Testing "let add:fn = (x:i32, y:i32):i32 => x+y;"
+        // Testing "let add:fn = (x:num, y:num):num => x+y;"
         let tokens = vec![
             TokenKind::Let,
             TokenKind::Identifier("add".to_string()),
@@ -541,14 +523,14 @@ mod tests {
             TokenKind::LeftParen,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
-            TokenKind::Type("i32".to_string()),
+            TokenKind::Type("num".to_string()),
             TokenKind::Comma,
             TokenKind::Identifier("y".to_string()),
             TokenKind::Colon,
-            TokenKind::Type("i32".to_string()),
+            TokenKind::Type("num".to_string()),
             TokenKind::RightParen,
             TokenKind::Colon,
-            TokenKind::Type("i32".to_string()),
+            TokenKind::Type("num".to_string()),
             TokenKind::Arrow,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Addition,
@@ -567,14 +549,14 @@ mod tests {
                     parameters: vec![
                         FunctionParameter {
                             name: "x".to_string(),
-                            type_: Type::Integer,
+                            type_: Type::Number,
                         },
                         FunctionParameter {
                             name: "y".to_string(),
-                            type_: Type::Integer,
+                            type_: Type::Number,
                         }
                     ],
-                    return_type: Type::Integer,
+                    return_type: Type::Number,
                     expression: Box::new(Expression::BinaryOperation(BinaryOperation {
                         operator: BinaryOperator::Add,
                         left: Box::new(Expression::Identifier("x".to_string())),
@@ -591,20 +573,20 @@ mod tests {
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
-            TokenKind::Type("i32".to_string()),
+            TokenKind::Type("num".to_string()),
             TokenKind::Assignment,
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
             TokenKind::Question,
             TokenKind::LeftBrace,
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
             TokenKind::Arrow,
-            TokenKind::Integer(2),
+            TokenKind::Number(2.0),
             TokenKind::Comma,
-            TokenKind::Integer(2),
+            TokenKind::Number(2.0),
             TokenKind::Arrow,
-            TokenKind::Integer(3),
+            TokenKind::Number(3.0),
             TokenKind::Comma,
-            TokenKind::Integer(4),
+            TokenKind::Number(4.0),
             TokenKind::RightBrace,
             TokenKind::Semicolon,
             TokenKind::EOF,
@@ -617,14 +599,14 @@ mod tests {
             items[0],
             Item::Declaration(Declaration {
                 name: "x".to_string(),
-                type_: Type::Integer,
+                type_: Type::Number,
                 expression: Box::new(Expression::Match(Match {
-                    value: Box::new(Expression::Integer(1)),
+                    value: Box::new(Expression::Number(1.0)),
                     patterns: vec![
-                        (Expression::Integer(1), Expression::Integer(2),),
-                        (Expression::Integer(2), Expression::Integer(3),),
+                        (Expression::Number(1.0), Expression::Number(2.0),),
+                        (Expression::Number(2.0), Expression::Number(3.0),),
                     ],
-                    default: Some(Box::new(Expression::Integer(4))),
+                    default: Some(Box::new(Expression::Number(4.0))),
                 }))
             })
         );
@@ -636,14 +618,14 @@ mod tests {
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
-            TokenKind::Type("[i32]".to_string()),
+            TokenKind::Type("[num]".to_string()),
             TokenKind::Assignment,
             TokenKind::LeftBracket,
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
             TokenKind::Comma,
-            TokenKind::Integer(2),
+            TokenKind::Number(2.0),
             TokenKind::Comma,
-            TokenKind::Integer(3),
+            TokenKind::Number(3.0),
             TokenKind::RightBracket,
             TokenKind::Semicolon,
             TokenKind::EOF,
@@ -656,15 +638,15 @@ mod tests {
             items[0],
             Item::Declaration(Declaration {
                 name: "x".to_string(),
-                type_: Type::Array(Box::new(Type::Integer)),
-                expression: Box::new(Expression::Array(Array::new(
-                    Type::Array(Box::new(Type::Integer)),
+                type_: Type::Array(Box::new(Type::Number)),
+                expression: Box::new(Expression::Array(
+                    Type::Number,
                     vec![
-                        Expression::Integer(1),
-                        Expression::Integer(2),
-                        Expression::Integer(3),
+                        Expression::Number(1.0),
+                        Expression::Number(2.0),
+                        Expression::Number(3.0),
                     ]
-                )))
+                ))
             })
         );
     }
@@ -675,7 +657,7 @@ mod tests {
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
-            TokenKind::Type("[u8]".to_string()),
+            TokenKind::Type("[char]".to_string()),
             TokenKind::Assignment,
             TokenKind::String("nino".to_string()),
             TokenKind::Semicolon,
@@ -689,36 +671,36 @@ mod tests {
             items[0],
             Item::Declaration(Declaration {
                 name: "x".to_string(),
-                type_: Type::Array(Box::new(Type::Integer)),
-                expression: Box::new(Expression::Array(Array::new(
-                    Type::Array(Box::new(Type::Integer)),
+                type_: Type::Array(Box::new(Type::Char)),
+                expression: Box::new(Expression::Array(
+                    Type::Char,
                     vec![
-                        Expression::Integer('n' as i32),
-                        Expression::Integer('i' as i32),
-                        Expression::Integer('n' as i32),
-                        Expression::Integer('o' as i32),
+                        Expression::Char('n' as u8),
+                        Expression::Char('i' as u8),
+                        Expression::Char('n' as u8),
+                        Expression::Char('o' as u8),
                     ]
-                )))
+                ))
             })
         );
     }
 
     #[test]
     fn test_parser() {
-        // Testing "let x:bool = 1+3>2 == true;"
+        // Testing "let x:bool = 1+3>2 == 1;"
         let tokens = vec![
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),
             TokenKind::Colon,
             TokenKind::Type("bool".to_string()),
             TokenKind::Assignment,
-            TokenKind::Integer(1),
+            TokenKind::Number(1.0),
             TokenKind::Addition,
-            TokenKind::Integer(3),
+            TokenKind::Number(3.0),
             TokenKind::GreaterThan,
-            TokenKind::Integer(2),
+            TokenKind::Number(2.0),
             TokenKind::Equal,
-            TokenKind::Bool(true),
+            TokenKind::Character(1),
             TokenKind::Semicolon,
         ];
 
@@ -735,12 +717,12 @@ mod tests {
                         operator: BinaryOperator::GreaterThan,
                         left: Box::new(Expression::BinaryOperation(BinaryOperation {
                             operator: BinaryOperator::Add,
-                            left: Box::new(Expression::Integer(1)),
-                            right: Box::new(Expression::Integer(3)),
+                            left: Box::new(Expression::Number(1.0)),
+                            right: Box::new(Expression::Number(3.0)),
                         })),
-                        right: Box::new(Expression::Integer(2)),
+                        right: Box::new(Expression::Number(2.0)),
                     })),
-                    right: Box::new(Expression::Bool(true)),
+                    right: Box::new(Expression::Char(1)),
                 })),
             })
         );

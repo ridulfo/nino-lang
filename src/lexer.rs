@@ -7,10 +7,10 @@ pub enum TokenKind {
 
     // types and values
     Type(String),
-    Integer(i32),
-    Float(f32),
+    Character(u8),
+    Number(f64),
     String(String),
-    Bool(bool),
+    Boolean(bool),
     Function,
 
     // separators
@@ -56,29 +56,14 @@ pub enum TokenKind {
 
 fn parse_number(chars: &mut Peekable<Chars>) -> TokenKind {
     let mut string = String::new();
-    let mut seen_dot = false;
     while let Some(c) = chars.peek() {
         match c {
-            '0'..='9' => {
-                string.push(*c);
-            }
-            '.' => {
-                if seen_dot {
-                    panic!("Numbers can only have one dot.");
-                }
-                seen_dot = true;
-                string.push(*c);
-            }
+            '0'..='9' | '.' => string.push(*c),
             _ => break,
         }
         chars.next();
     }
-
-    if seen_dot {
-        TokenKind::Float(string.parse::<f32>().unwrap())
-    } else {
-        TokenKind::Integer(string.parse::<i32>().unwrap())
-    }
+    TokenKind::Number(string.parse::<f64>().unwrap())
 }
 
 fn consume_whitespace(chars: &mut Peekable<Chars>) {
@@ -131,9 +116,9 @@ fn parse_word(chars: &mut Peekable<Chars>) -> TokenKind {
     match string.as_str() {
         "let" => TokenKind::Let,
         "fn" => TokenKind::Function,
-        "true" => TokenKind::Bool(true),
-        "false" => TokenKind::Bool(false),
         "mod" => TokenKind::Modulus,
+        "true" => TokenKind::Boolean(true),
+        "false" => TokenKind::Boolean(false),
         _ => TokenKind::Identifier(string),
     }
 }
@@ -279,7 +264,7 @@ mod tests {
         let input = "123 345";
         let chars = &mut input.chars().peekable();
         let token = parse_number(chars);
-        assert_eq!(token, TokenKind::Integer(123));
+        assert_eq!(token, TokenKind::Number(123.0));
         assert_eq!(chars.next(), Some(' '));
     }
 
@@ -287,7 +272,7 @@ mod tests {
     fn test_parse_float() {
         let input = "123.456";
         let token = parse_number(&mut input.chars().peekable());
-        assert_eq!(token, TokenKind::Float(123.456));
+        assert_eq!(token, TokenKind::Number(123.456));
     }
 
     #[test]
@@ -307,7 +292,7 @@ mod tests {
 
     #[test]
     fn test_parse_expression() {
-        let input = "let x:i32 = 3;";
+        let input = "let x:num = 3;";
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
         assert_eq!(
@@ -316,9 +301,9 @@ mod tests {
                 TokenKind::Let,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("i32".to_string()),
+                TokenKind::Type("num".to_string()),
                 TokenKind::Assignment,
-                TokenKind::Integer(3),
+                TokenKind::Number(3.0),
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ]
@@ -333,19 +318,19 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Equal,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::NotEqual,
-                TokenKind::Integer(3),
+                TokenKind::Number(3.0),
                 TokenKind::GreaterThan,
-                TokenKind::Integer(4),
+                TokenKind::Number(4.0),
                 TokenKind::LessThan,
-                TokenKind::Integer(5),
+                TokenKind::Number(5.0),
                 TokenKind::GreaterEqualThan,
-                TokenKind::Integer(6),
+                TokenKind::Number(6.0),
                 TokenKind::LessEqualThan,
-                TokenKind::Integer(7),
+                TokenKind::Number(7.0),
                 TokenKind::EOF,
             ]
         );
@@ -353,7 +338,7 @@ mod tests {
 
     #[test]
     fn test_equality_expression() {
-        let input = "let x:bool = 1+3>2 == true;";
+        let input = "let x:bool = 1+3>2 == 1;";
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
         assert_eq!(
@@ -364,13 +349,13 @@ mod tests {
                 TokenKind::Colon,
                 TokenKind::Type("bool".to_string()),
                 TokenKind::Assignment,
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Addition,
-                TokenKind::Integer(3),
+                TokenKind::Number(3.0),
                 TokenKind::GreaterThan,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Equal,
-                TokenKind::Bool(true),
+                TokenKind::Number(1.0),
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ]
@@ -379,7 +364,7 @@ mod tests {
 
     #[test]
     fn test_array() {
-        let input = "let x:[i32] = [1,2,3];";
+        let input = "let x:[num] = [1,2,3];";
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
         assert_eq!(
@@ -388,14 +373,14 @@ mod tests {
                 TokenKind::Let,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("[i32]".to_string()),
+                TokenKind::Type("[num]".to_string()),
                 TokenKind::Assignment,
                 TokenKind::LeftBracket,
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Comma,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Comma,
-                TokenKind::Integer(3),
+                TokenKind::Number(3.0),
                 TokenKind::RightBracket,
                 TokenKind::Semicolon,
                 TokenKind::EOF,
@@ -405,8 +390,8 @@ mod tests {
 
     #[test]
     fn test_comment() {
-        let input = "let x:i32 = 1; # This is a comment
-let y:i32 = 2; # This is another comment";
+        let input = "let x:num = 1; # This is a comment
+let y:num = 2; # This is another comment";
 
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
@@ -417,16 +402,16 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::Let,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("i32".to_string()),
+                TokenKind::Type("num".to_string()),
                 TokenKind::Assignment,
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Semicolon,
                 TokenKind::Let,
                 TokenKind::Identifier("y".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("i32".to_string()),
+                TokenKind::Type("num".to_string()),
                 TokenKind::Assignment,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ],
@@ -435,7 +420,7 @@ let y:i32 = 2; # This is another comment";
 
     #[test]
     fn test_match_expression() {
-        let input = "let x:i32 = 1 ? {
+        let input = "let x:num = 1 ? {
     1 => 2,
     2 => 3,
     4
@@ -448,20 +433,20 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::Let,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("i32".to_string()),
+                TokenKind::Type("num".to_string()),
                 TokenKind::Assignment,
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Question,
                 TokenKind::LeftBrace,
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Arrow,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Comma,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Arrow,
-                TokenKind::Integer(3),
+                TokenKind::Number(3.0),
                 TokenKind::Comma,
-                TokenKind::Integer(4),
+                TokenKind::Number(4.0),
                 TokenKind::RightBrace,
                 TokenKind::Semicolon,
                 TokenKind::EOF,
@@ -470,8 +455,8 @@ let y:i32 = 2; # This is another comment";
     }
 
     #[test]
-    fn test_string(){
-        let input = "let x:[u8] = \"hello world\";";
+    fn test_string() {
+        let input = "let x:[char] = \"hello world\";";
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
 
@@ -481,7 +466,7 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::Let,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("[u8]".to_string()),
+                TokenKind::Type("[char]".to_string()),
                 TokenKind::Assignment,
                 TokenKind::String("hello world".to_string()),
                 TokenKind::Semicolon,
@@ -492,9 +477,9 @@ let y:i32 = 2; # This is another comment";
 
     #[test]
     fn test_is_prime() {
-        let input = "let is_prime:fn = (x:i32):bool =>
+        let input = "let is_prime:fn = (x:num):bool =>
     | let sqrt_x:f32 = sqrt(x);
-    | let sqrt_x_int:i32 = floor(sqrt_x);
+    | let sqrt_x_int:num = floor(sqrt_x);
     => true ? {
         x==1 => false,
         x==2 => true,
@@ -516,7 +501,7 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::LeftParen,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("i32".to_string()),
+                TokenKind::Type("num".to_string()),
                 TokenKind::RightParen,
                 TokenKind::Colon,
                 TokenKind::Type("bool".to_string()),
@@ -536,7 +521,7 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::Let,
                 TokenKind::Identifier("sqrt_x_int".to_string()),
                 TokenKind::Colon,
-                TokenKind::Type("i32".to_string()),
+                TokenKind::Type("num".to_string()),
                 TokenKind::Assignment,
                 TokenKind::Identifier("floor".to_string()),
                 TokenKind::LeftParen,
@@ -544,36 +529,36 @@ let y:i32 = 2; # This is another comment";
                 TokenKind::RightParen,
                 TokenKind::Semicolon,
                 TokenKind::Arrow,
-                TokenKind::Bool(true),
+                TokenKind::Boolean(true),
                 TokenKind::Question,
                 TokenKind::LeftBrace,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Equal,
-                TokenKind::Integer(1),
+                TokenKind::Number(1.0),
                 TokenKind::Arrow,
-                TokenKind::Bool(false),
+                TokenKind::Boolean(false),
                 TokenKind::Comma,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Equal,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Arrow,
-                TokenKind::Bool(true),
+                TokenKind::Boolean(true),
                 TokenKind::Comma,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Modulus,
-                TokenKind::Integer(2),
+                TokenKind::Number(2.0),
                 TokenKind::Equal,
-                TokenKind::Integer(0),
+                TokenKind::Number(0.0),
                 TokenKind::Arrow,
-                TokenKind::Bool(false),
+                TokenKind::Boolean(false),
                 TokenKind::Comma,
-                TokenKind::Bool(true),
+                TokenKind::Boolean(true),
                 TokenKind::Arrow,
                 TokenKind::Identifier("is_prime_helper".to_string()),
                 TokenKind::LeftParen,
                 TokenKind::Identifier("x".to_string()),
                 TokenKind::Comma,
-                TokenKind::Integer(3),
+                TokenKind::Number(3.0),
                 TokenKind::Comma,
                 TokenKind::Identifier("sqrt_x_int".to_string()),
                 TokenKind::RightParen,

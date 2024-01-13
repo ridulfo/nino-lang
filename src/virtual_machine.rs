@@ -2,68 +2,13 @@ use std::collections::HashMap;
 use std::mem::discriminant;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::parser::{BinaryOperator, Declaration, Expression, Item, Type};
+use crate::parser::{BinaryOperator, Declaration, Expression, Item};
 
 fn print(expression: Expression) -> Expression {
     match &expression {
-        Expression::Integer(val) => println!("{}", val),
-        Expression::Float(val) => println!("{}", val),
-        Expression::Bool(val) => println!("{}", val),
-        Expression::Array(arr) => {
-            let type_ = arr.type_.clone();
-            match type_ {
-                Type::Array(type_) => match *type_ {
-                    Type::Integer => {
-                        let mut result = String::from("[");
-                        for (i, element) in arr.elements.iter().enumerate() {
-                            let value = match element {
-                                Expression::Integer(val) => val.to_string(),
-                                _ => panic!("Invalid type"),
-                            };
-                            result.push_str(&value);
-                            if i != arr.elements.len() - 1 {
-                                result.push_str(", ");
-                            }
-                        }
-                        result.push_str("]");
-                        println!("{}", result);
-                    }
-                    Type::Float => {
-                        let mut result = String::from("[");
-                        for (i, element) in arr.elements.iter().enumerate() {
-                            let value = match element {
-                                Expression::Float(val) => val.to_string(),
-                                _ => panic!("Invalid type"),
-                            };
-                            result.push_str(&value);
-                            if i != arr.elements.len() - 1 {
-                                result.push_str(", ");
-                            }
-                        }
-                        result.push_str("]");
-                        println!("{}", result);
-                    }
-                    Type::Boolean => {
-                        let mut result = String::from("[");
-                        for (i, element) in arr.elements.iter().enumerate() {
-                            let value = match element {
-                                Expression::Bool(val) => val.to_string(),
-                                _ => panic!("Invalid type"),
-                            };
-                            result.push_str(&value);
-                            if i != arr.elements.len() - 1 {
-                                result.push_str(", ");
-                            }
-                        }
-                        result.push_str("]");
-                        println!("{}", result);
-                    }
-                    _ => panic!("Invalid type"),
-                },
-                _ => panic!("Invalid type"),
-            }
-        }
-        _ => panic!("Invalid type"),
+        Expression::Char(val) => println!("{}", val),
+        Expression::Number(val) => println!("{}", val),
+        _ => print!("{:?}", expression),
     }
     return expression;
 }
@@ -74,69 +19,21 @@ fn time() -> Expression {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
     let in_ms = since_the_epoch.as_millis();
-    return Expression::Float(in_ms as f32);
+    return Expression::Number(in_ms as f64);
 }
 
-fn binary_integer_integer(left_val: i32, right_val: i32, operator: BinaryOperator) -> Expression {
+fn binary_float_float(left_val: f64, right_val: f64, operator: BinaryOperator) -> Expression {
     match operator {
-        BinaryOperator::Add => Expression::Integer(left_val + right_val),
-        BinaryOperator::Subtract => Expression::Integer(left_val - right_val),
-        BinaryOperator::Multiply => Expression::Integer(left_val * right_val),
-        BinaryOperator::Divide => Expression::Float((left_val as f32) / (right_val as f32)),
-        BinaryOperator::Modulo => Expression::Integer(left_val % right_val),
+        BinaryOperator::Add => Expression::Number(left_val + right_val),
+        BinaryOperator::Subtract => Expression::Number(left_val - right_val),
+        BinaryOperator::Multiply => Expression::Number(left_val * right_val),
+        BinaryOperator::Divide => Expression::Number(left_val / right_val),
+        BinaryOperator::Modulo => Expression::Number(left_val % right_val),
         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
         BinaryOperator::GreaterThan => Expression::Bool(left_val > right_val),
         BinaryOperator::LessThan => Expression::Bool(left_val < right_val),
         BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= right_val),
         BinaryOperator::LessEqualThan => Expression::Bool(left_val <= right_val),
-        _ => unimplemented!("Unknown operator {:?}", operator),
-    }
-}
-
-fn binary_float_float(left_val: f32, right_val: f32, operator: BinaryOperator) -> Expression {
-    match operator {
-        BinaryOperator::Add => Expression::Float(left_val + right_val),
-        BinaryOperator::Subtract => Expression::Float(left_val - right_val),
-        BinaryOperator::Multiply => Expression::Float(left_val * right_val),
-        BinaryOperator::Divide => Expression::Float(left_val / right_val),
-        BinaryOperator::Modulo => Expression::Float(left_val % right_val),
-        BinaryOperator::Equal => Expression::Bool(left_val == right_val),
-        BinaryOperator::GreaterThan => Expression::Bool(left_val > right_val),
-        BinaryOperator::LessThan => Expression::Bool(left_val < right_val),
-        BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= right_val),
-        BinaryOperator::LessEqualThan => Expression::Bool(left_val <= right_val),
-        _ => unimplemented!("Unknown operator {:?}", operator),
-    }
-}
-
-fn binary_integer_float(left_val: i32, right_val: f32, operator: BinaryOperator) -> Expression {
-    match operator {
-        BinaryOperator::Add => Expression::Float((left_val as f32) + right_val),
-        BinaryOperator::Subtract => Expression::Float((left_val as f32) - right_val),
-        BinaryOperator::Multiply => Expression::Float((left_val as f32) * right_val),
-        BinaryOperator::Divide => Expression::Float((left_val as f32) / right_val),
-        BinaryOperator::Modulo => Expression::Float((left_val as f32) % right_val),
-        BinaryOperator::Equal => Expression::Bool(left_val == (right_val as i32)),
-        BinaryOperator::GreaterThan => Expression::Bool((left_val as f32) > right_val),
-        BinaryOperator::LessThan => Expression::Bool((left_val as f32) < right_val),
-        BinaryOperator::GreaterEqualThan => Expression::Bool((left_val as f32) >= right_val),
-        BinaryOperator::LessEqualThan => Expression::Bool((left_val as f32) <= right_val),
-        _ => unimplemented!("Unknown operator {:?}", operator),
-    }
-}
-
-fn binary_float_integer(left_val: f32, right_val: i32, operator: BinaryOperator) -> Expression {
-    match operator {
-        BinaryOperator::Add => Expression::Float(left_val + (right_val as f32)),
-        BinaryOperator::Subtract => Expression::Float(left_val - (right_val as f32)),
-        BinaryOperator::Multiply => Expression::Float(left_val * (right_val as f32)),
-        BinaryOperator::Divide => Expression::Float(left_val / (right_val as f32)),
-        BinaryOperator::Modulo => Expression::Float(left_val % (right_val as f32)),
-        BinaryOperator::Equal => Expression::Bool(left_val == (right_val as f32)),
-        BinaryOperator::GreaterThan => Expression::Bool(left_val > (right_val as f32)),
-        BinaryOperator::LessThan => Expression::Bool(left_val < (right_val as f32)),
-        BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= (right_val as f32)),
-        BinaryOperator::LessEqualThan => Expression::Bool(left_val <= (right_val as f32)),
         _ => unimplemented!("Unknown operator {:?}", operator),
     }
 }
@@ -147,10 +44,9 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
 
     loop {
         return match current_expression {
-            Expression::Integer(_)
-            | Expression::Float(_)
-            | Expression::Bool(_)
-            | Expression::Array(_) => current_expression,
+            Expression::Number(..)
+            | Expression::Bool(..)
+            | Expression::Array(..) => current_expression,
             Expression::Identifier(identifier) => {
                 let declaration = current_symbols.get(&identifier).unwrap();
                 let expression = declaration.expression.clone();
@@ -166,8 +62,7 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                 "sqrt" => {
                     let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
                     match expression {
-                        Expression::Integer(val) => Expression::Float((val as f32).sqrt()),
-                        Expression::Float(val) => Expression::Float(val.sqrt()),
+                        Expression::Number(val) => Expression::Number(val.sqrt()),
                         _ => panic!("Invalid type"),
                     }
                 }
@@ -203,24 +98,16 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                 let operator = binary.operator;
                 return match (left, right) {
                     // Perform operations based on the types and the operator
-                    (Expression::Integer(left_val), Expression::Integer(right_val)) => {
-                        binary_integer_integer(left_val, right_val, operator)
-                    }
-                    (Expression::Float(left_val), Expression::Float(right_val)) => {
+                    (Expression::Number(left_val), Expression::Number(right_val)) => {
                         binary_float_float(left_val, right_val, operator)
                     }
-                    (Expression::Integer(left_val), Expression::Float(right_val)) => {
-                        binary_integer_float(left_val, right_val, operator)
-                    }
-                    (Expression::Float(left_val), Expression::Integer(right_val)) => {
-                        binary_float_integer(left_val, right_val, operator)
-                    }
-                    (Expression::Array(left_val), Expression::Array(right_val)) => match operator {
+                    (Expression::Array(left_type, left_val), Expression::Array(right_type, right_val)) => match operator {
                         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
                         BinaryOperator::Add => {
+                            assert_eq!(left_type, right_type, "Invalid types");
                             let mut result = left_val.clone();
-                            result.elements.extend(right_val.elements);
-                            Expression::Array(result)
+                            result.extend(right_val);
+                            Expression::Array(left_type, result)
                         }
                         _ => panic!("Invalid operation"),
                     },
@@ -298,19 +185,19 @@ mod tests {
         // Test adding two integers
         let expression = Expression::BinaryOperation(BinaryOperation {
             operator: BinaryOperator::Add,
-            left: Box::new(Expression::Integer(1)),
-            right: Box::new(Expression::Integer(2)),
+            left: Box::new(Expression::Number(1.0)),
+            right: Box::new(Expression::Number(2.0)),
         });
 
         let mut vm = VirtualMachine::new();
         let result = vm.evaluate(expression);
 
-        assert_eq!(result, Expression::Integer(3));
+        assert_eq!(result, Expression::Number(3.0));
     }
 
     #[test]
     fn test_recursion() {
-        let declare = "let factorial:fn = (n:i32):i32 => n ? {
+        let declare = "let factorial:fn = (n:num):num => n ? {
     0 => 1,
     n * factorial(n - 1)
 };
@@ -335,9 +222,9 @@ mod tests {
 
     #[test]
     fn test_array_operations() {
-        let declare = "let array:[i32] = [1, 2, 3, 4, 5];
-        let array2:[i32] = [6, 7, 8, 9, 10];
-        let array3:[i32] = array + array2;
+        let declare = "let array:[num] = [1, 2, 3, 4, 5];
+        let array2:[num] = [6, 7, 8, 9, 10];
+        let array3:[num] = array + array2;
         print(array3);";
         let mut lexer = Lexer::new(declare);
         let tokens = lexer.tokenize();
@@ -351,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_string() {
-        let declare = "let string:[u8] = \"Hello, World!\";";
+        let declare = "let string:[char] = \"Hello, World!\";";
 
         let mut lexer = Lexer::new(declare);
         let tokens = lexer.tokenize();
@@ -364,7 +251,7 @@ mod tests {
 
     #[test]
     fn tail_optimization() {
-        let declare = "let increment:fn = (x:i32, i:i32):i32 => i ? {
+        let declare = "let increment:fn = (x:num, i:num):num => i ? {
     0 => x,
     increment(x + 1, i - 1)
 };
