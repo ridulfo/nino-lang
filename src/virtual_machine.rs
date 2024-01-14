@@ -4,10 +4,23 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::parser::{BinaryOperator, Declaration, Expression, Item};
 
-fn print(expression: Expression) -> Expression {
+fn print(expression: Expression, end: &str) -> Expression {
     match &expression {
-        Expression::Char(val) => println!("{}", val),
-        Expression::Number(val) => println!("{}", val),
+        Expression::Char(val) => print!("{}{}", *val as char, end),
+        Expression::Number(val) => print!("{}{}", val, end),
+        Expression::Bool(val) => print!("{}{}", val, end),
+        Expression::Array(type_, val) => {
+            let is_string = type_ == &crate::parser::Type::Char;
+            print!("{}", if is_string { "\"" } else { "[" });
+            for (i, item) in val.iter().enumerate() {
+                if i != 0 && !is_string {
+                    print!(", ");
+                }
+                print(item.clone(), "");
+            }
+            print!("{}", if is_string { "\"" } else { "[" });
+            print!("{}", end);
+        }
         _ => print!("{:?}", expression),
     }
     return expression;
@@ -54,10 +67,10 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                 continue;
             }
             Expression::FunctionCall(ref function_call) => match function_call.name.as_str() {
-                "print" => print(evaluate(
-                    function_call.arguments[0].clone(),
-                    &current_symbols,
-                )),
+                "print" => print(
+                    evaluate(function_call.arguments[0].clone(), &current_symbols),
+                    "\n",
+                ),
                 "time" => time(),
                 "sqrt" => {
                     let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
@@ -228,7 +241,6 @@ mod tests {
         let function = vm.symbols.get("factorial").unwrap();
         assert_eq!(function.name, "factorial");
         assert_eq!(function.type_, Type::Function);
-
     }
 
     /// Testing decalration of arrays and concatenation
@@ -304,8 +316,6 @@ mod tests {
             )
         );
     }
-
-
 
     /// Testing tail call optimization
     #[test]
