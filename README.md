@@ -11,13 +11,12 @@ Like the [Whippet](https://en.wikipedia.org/wiki/Whippet), this language [will h
 
 The goal is to create a small language that only has the essential features needed to be able to do pretty much anything. No bloat. This will make [self-hosting](<https://en.wikipedia.org/wiki/Self-hosting_(compilers)>) easier and faster.
 
-In this spirit, the under the hood type system is minimal. There are only 4 types:
-- `u8` (unsigned 8-bit integer): this is used for booleans and characters
-- `float` (64-bit floating point number): this is used for numbers
-- `fn` (function): this is used for functions
-- `array`: will be an array of any of the above types
-
-The user will however be able to use `true` and `false`, which will be converted to `u8` values of `1` and `0` respectively. 
+In this spirit, the under the hood type system is minimal. There are only 5 types:
+- `num` - 64 bit floating point number - this is used for numbers
+- `char` - 8 bit number - used to represent characters
+- `bool` - 1-bit - used to represent true and false
+- `fn` - functions are first-class citizens, this is their type
+- `array` - an array of any type (even arrays)
 
 The language is chill with side effects. There is no need to wrap anything in monads.
 
@@ -25,47 +24,47 @@ At the moment the language is interpreted, but the goal is to create a self-host
 
 There is no garbage collector (TBD 🤨).
 
-## Current status
-
-- 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
-- 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
-- 2023-10-17: Created compiler program
-- 2023-10-22: Implemented declaring and calling functions. Function calls can be used as values in an expression. The next steps will need to be refactoring and adding unit tests.
-- 2023-10-28: Re-wrote the lexer and parser to rust. Added tons of unit tests. Created an interpreter to run `.ni` files.
-- 2023-10-29: Any programming language's most important features is correctness and safety. No need for more justification.
-- 2023-10-04: Added tail-call optimization. More complex computations are now possible.
-
 ## Quick start
 
 **Compile the interpreter**
 
-```Bash
+```bash
 cargo build --release && mv target/release/ninoi .
 ```
 
 **Run the example program**
 
-```Bash
+```bash
 ./ninoi examples/print-sum.ni
 ```
 
+### Bonus
+There is an expression to AST-diagram program too.
 
-## Syntax
+```bash
+cargo run --bin mermaid "1+2+3 + 1+2/3 + x mod y" > mermaid.md
+```
+<details>
+    <summary>Result</summary>
+    <img src="docs/mermaid.png"/>
+</details>
 
-Grammar definition can be found in [here](docs/grammar.md).
+## Documentation
+Documentation can be found in the [docs](docs/).
 
-Check the [examples](examples) directory for the currently supported syntax.
+There you can find the [language specification (WIP)](docs/language-specification.md) and the [grammar specification](docs/grammar.md).
+
 
 ### Examples
 
-```Rust
-let is_prime_helper:fn = (x:i32, i:i32):bool => true ? {
+```rust
+let is_prime_helper:fn = (x:num, i:num):bool => true ? {
     x==i => true,
     x mod i == 0 => false,
     is_prime_helper(x, i + 1)
 };
 
-let is_prime:fn = (x:i32):bool => x ? {
+let is_prime:fn = (x:num):bool => x ? {
     1 => false,
     2 => true,
     is_prime_helper(x, 2)
@@ -79,37 +78,39 @@ print(is_prime(6));
 print(is_prime(7));
 ```
 
-### Built-in functions
+## Progress
 
-#### print
-The print function prints the value of the expression passed to it. It returns the value of the expression passed to it.
-
-```Rust
-let two = print(1+1);
-```
-
-#### time
-Returns the current time in milliseconds.
-```Rust
-let t = time();
-```
+- 2023-10-13: Just finished defining the initial complete syntax. Next is to rewrite the lexer, parser and code generator to support the new syntax.
+- 2023-10-15: Syntax has been reworked and a grammar definition can be found in [docs](docs/grammar.md). The lexer has been updated to support the new syntax and the parser has been completely rewritten as a recursive descent parser. A code generated has been implemented that can generate LLVM IR. The next steps are to implement more language features. See [milestones](#milestones) for more details.
+- 2023-10-17: Created compiler program
+- 2023-10-22: Implemented declaring and calling functions. Function calls can be used as values in an expression. The next steps will need to be refactoring and adding unit tests.
+- 2023-10-28: Re-wrote the lexer and parser to rust. Added tons of unit tests. Created an interpreter to run `.ni` files.
+- 2023-10-29: Any programming language's most important features is correctness and safety. No need for more justification.
+- 2023-10-04: Added tail-call optimization. More complex computations are now possible.
+- 2024-01-13: Simplified type system to only have 5 types.
 
 ## Milestones
 
+
+
 - [x] Define complete syntax
-- [x] Basic Lexer
-- [x] Basic Parser
-- [ ] arrays, strings
+- [x] numbers
+- [x] characters
+- [x] booleans
+- [x] function declaration and call
+- [ ] arrays and strings
 - [ ] built-in functions
-  - [x] print
-  - [x] matching
-  - [ ] map
-  - [ ] filter
-  - [ ] reduce
+    - [x] print
+    - [x] matching
+    - [ ] map
+    - [ ] filter
+    - [ ] reduce
+- [ ] anonymous functions
 - [ ] self-host compiler
 - [ ] [**SOLVE ADVENT OF CODE**](https://time-since.nicolo.io/#/20231201-000000?title=Advent+of+code)
 
 ## Tests
+In order to run the tests, simply run:
 
 ```bash
 cargo test

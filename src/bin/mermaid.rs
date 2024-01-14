@@ -20,6 +20,7 @@ fn fishify_expression(expression: Expression) -> String {
                 BinaryOperator::Subtract => "Subtract",
                 BinaryOperator::Multiply => "Multiply",
                 BinaryOperator::Divide => "Divide",
+                BinaryOperator::Modulo => "Modulo",
                 _ => unimplemented!(),
             };
 
