@@ -118,6 +118,11 @@ fn parse_function_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Express
                         "num" => Type::Number,
                         "char" => Type::Char,
                         "bool" => Type::Boolean,
+                        "fn" => Type::Function,
+                        "[num]" => Type::Array(Box::new(Type::Number)),
+                        "[bool]" => Type::Array(Box::new(Type::Boolean)),
+                        "[char]" => Type::Array(Box::new(Type::Char)),
+                        "[fn]" => Type::Array(Box::new(Type::Function)),
                         _ => panic!("Unknown type: {:?}", type_),
                     },
                     _ => panic!("Expected type"),
@@ -185,6 +190,7 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
         }
         Some(TokenKind::Number(value)) => Expression::Number(*value),
         Some(TokenKind::Character(value)) => Expression::Char(*value),
+        Some(TokenKind::Boolean(value)) => Expression::Bool(*value),
         Some(TokenKind::String(value)) => Expression::Array(
             Type::Char,
             value.chars().map(|c| Expression::Char(c as u8)).collect(),
@@ -450,9 +456,9 @@ impl<'a> Parser<'a> {
 mod tests {
     use super::*;
 
+    /// Testing `let x:num = 3;`
     #[test]
     fn test_parse_declaration() {
-        // Testing "let x:num = 3;"
         let tokens = vec![
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),
@@ -461,6 +467,7 @@ mod tests {
             TokenKind::Assignment,
             TokenKind::Number(3.0),
             TokenKind::Semicolon,
+            TokenKind::EOF,
         ];
         let declaration = parse_declaration(&mut tokens.iter().peekable());
         assert_eq!(
@@ -473,6 +480,176 @@ mod tests {
         );
     }
 
+    /// Testing type number `let x:num = 3;`
+    #[test]
+    fn test_type_number() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("num".to_string()),
+            TokenKind::Assignment,
+            TokenKind::Number(3.0),
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+        let mut parser = Parser::new(&tokens);
+        let declaration = parse_declaration(&mut parser.tokens);
+        assert_eq!(
+            declaration,
+            Declaration {
+                name: "x".to_string(),
+                type_: Type::Number,
+                expression: Box::new(Expression::Number(3.0)),
+            }
+        );
+    }
+
+    /// Testing type char `let x:char = 'a';`
+    #[test]
+    fn test_type_char() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("char".to_string()),
+            TokenKind::Assignment,
+            TokenKind::Character('a' as u8),
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+        let mut parser = Parser::new(&tokens);
+        let declaration = parse_declaration(&mut parser.tokens);
+        assert_eq!(
+            declaration,
+            Declaration {
+                name: "x".to_string(),
+                type_: Type::Char,
+                expression: Box::new(Expression::Char('a' as u8)),
+            }
+        );
+    }
+
+    /// Testing type bool `let x:bool = true;`
+    #[test]
+    fn test_type_bool() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("bool".to_string()),
+            TokenKind::Assignment,
+            TokenKind::Boolean(true),
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+        let mut parser = Parser::new(&tokens);
+        let declaration = parse_declaration(&mut parser.tokens);
+        assert_eq!(
+            declaration,
+            Declaration {
+                name: "x".to_string(),
+                type_: Type::Boolean,
+                expression: Box::new(Expression::Bool(true)),
+            }
+        );
+    }
+
+    /// Testing type fn `let x:fn = (x:num, y:num):num => x+y;`
+    #[test]
+    fn test_type_fn() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("fn".to_string()),
+            TokenKind::Assignment,
+            TokenKind::LeftParen,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("num".to_string()),
+            TokenKind::Comma,
+            TokenKind::Identifier("y".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("num".to_string()),
+            TokenKind::RightParen,
+            TokenKind::Colon,
+            TokenKind::Type("num".to_string()),
+            TokenKind::Arrow,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Addition,
+            TokenKind::Identifier("y".to_string()),
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+        let mut parser = Parser::new(&tokens);
+        let declaration = parse_declaration(&mut parser.tokens);
+        assert_eq!(
+            declaration,
+            Declaration {
+                name: "x".to_string(),
+                type_: Type::Function,
+                expression: Box::new(Expression::FunctionDeclaration(FunctionDeclaration {
+                    parameters: vec![
+                        FunctionParameter {
+                            name: "x".to_string(),
+                            type_: Type::Number,
+                        },
+                        FunctionParameter {
+                            name: "y".to_string(),
+                            type_: Type::Number,
+                        }
+                    ],
+                    return_type: Type::Number,
+                    expression: Box::new(Expression::BinaryOperation(BinaryOperation {
+                        operator: BinaryOperator::Add,
+                        left: Box::new(Expression::Identifier("x".to_string())),
+                        right: Box::new(Expression::Identifier("y".to_string())),
+                    })),
+                }))
+            }
+        );
+    }
+
+    /// Testing type [num] `let x:[num] = [1, 2, 3];`
+    #[test]
+    fn test_type_array() {
+        let tokens = vec![
+            TokenKind::Let,
+            TokenKind::Identifier("x".to_string()),
+            TokenKind::Colon,
+            TokenKind::Type("[num]".to_string()),
+            TokenKind::Assignment,
+            TokenKind::LeftBracket,
+            TokenKind::Number(1.0),
+            TokenKind::Comma,
+            TokenKind::Number(2.0),
+            TokenKind::Comma,
+            TokenKind::Number(3.0),
+            TokenKind::RightBracket,
+            TokenKind::Semicolon,
+            TokenKind::EOF,
+        ];
+        let mut parser = Parser::new(&tokens);
+        let declaration = parse_declaration(&mut parser.tokens);
+        assert_eq!(
+            declaration,
+            Declaration {
+                name: "x".to_string(),
+                type_: Type::Array(Box::new(Type::Number)),
+                expression: Box::new(Expression::Array(
+                    Type::Number,
+                    vec![
+                        Expression::Number(1.0),
+                        Expression::Number(2.0),
+                        Expression::Number(3.0),
+                    ]
+                ))
+            }
+        );
+    }
+
+    /// Testing `1 == 1`
     #[test]
     fn test_equality() {
         let tokens = vec![
@@ -492,6 +669,7 @@ mod tests {
         );
     }
 
+    /// Testing `print(1);`
     #[test]
     fn test_function_call() {
         let tokens = vec![
@@ -511,9 +689,9 @@ mod tests {
         );
     }
 
+    /// Testing `let add:fn = (x:num, y:num):num => x+y;`
     #[test]
     fn test_function_declaration() {
-        // Testing "let add:fn = (x:num, y:num):num => x+y;"
         let tokens = vec![
             TokenKind::Let,
             TokenKind::Identifier("add".to_string()),
@@ -567,6 +745,7 @@ mod tests {
         );
     }
 
+    /// Testing `let x:num = 1 ? {1 => 2, 2 => 3, 4 };`
     #[test]
     fn test_match() {
         let tokens = vec![
@@ -612,6 +791,7 @@ mod tests {
         );
     }
 
+    /// Testing `let x:[num] = [1, 2, 3];`
     #[test]
     fn test_array() {
         let tokens = vec![
@@ -651,6 +831,7 @@ mod tests {
         );
     }
 
+    /// Testing `let x:[char] = "nino";`
     #[test]
     fn test_string() {
         let tokens = vec![
@@ -685,9 +866,9 @@ mod tests {
         );
     }
 
+    /// Testing `let x:bool = 1+3>2 == 1;`
     #[test]
     fn test_parser() {
-        // Testing "let x:bool = 1+3>2 == 1;"
         let tokens = vec![
             TokenKind::Let,
             TokenKind::Identifier("x".to_string()),

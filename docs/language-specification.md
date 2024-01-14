@@ -97,7 +97,7 @@ print(is_prime(2));
 
 ## Arrays
 ```typescript
-let message1 = "Hello world!"; // Optionally: message1:string = 
+let message1 = "Hello world!"; // Optionally: message1:[char] = 
 let message2 = ['H','e','l','l','o',' ','w','o','r','l','d','!'];
 message1 == message2; // Returns true
 
