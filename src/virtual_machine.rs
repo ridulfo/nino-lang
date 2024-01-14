@@ -11,14 +11,18 @@ fn print(expression: Expression, end: &str) -> Expression {
         Expression::Bool(val) => print!("{}{}", val, end),
         Expression::Array(type_, val) => {
             let is_string = type_ == &crate::parser::Type::Char;
-            print!("{}", if is_string { "\"" } else { "[" });
+            if !is_string {
+                print!("[");
+            }
             for (i, item) in val.iter().enumerate() {
                 if i != 0 && !is_string {
                     print!(", ");
                 }
                 print(item.clone(), "");
             }
-            print!("{}", if is_string { "\"" } else { "[" });
+            if !is_string {
+                print!("]");
+            }
             print!("{}", end);
         }
         _ => print!("{:?}", expression),
@@ -43,6 +47,7 @@ fn binary_float_float(left_val: f64, right_val: f64, operator: BinaryOperator) -
         BinaryOperator::Divide => Expression::Number(left_val / right_val),
         BinaryOperator::Modulo => Expression::Number(left_val % right_val),
         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
+        BinaryOperator::NotEqual => Expression::Bool(left_val != right_val),
         BinaryOperator::GreaterThan => Expression::Bool(left_val > right_val),
         BinaryOperator::LessThan => Expression::Bool(left_val < right_val),
         BinaryOperator::GreaterEqualThan => Expression::Bool(left_val >= right_val),

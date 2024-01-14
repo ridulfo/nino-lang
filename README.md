@@ -35,17 +35,34 @@ cargo build --release && mv target/release/ninoi .
 **Run the example program**
 
 ```bash
-./ninoi examples/print-sum.ni
+./ninoi examples/is-prime.ni
 ```
+<details>
+    <summary>Output</summary>
+    <pre>
+Let's calculate primes!
+10000019
+10000079
+10000103
+10000121
+10000139
+10000141
+10000169
+10000189
+Time in milliseconds:
+672
+    </pre>
+</details>
 
 ### Bonus
-There is an expression to AST-diagram program too.
+There is an expression-to-AST-diagram program too!
 
 ```bash
 cargo run --bin mermaid "1+2+3 + 1+2/3 + x mod y" > mermaid.md
 ```
 <details>
-    <summary>Result</summary>
+    <summary>Output</summary>
+    View this using a mermaid viewer.
     <img src="docs/mermaid.png"/>
 </details>
 
@@ -88,6 +105,7 @@ print(is_prime(7));
 - 2023-10-29: Any programming language's most important features is correctness and safety. No need for more justification.
 - 2023-10-04: Added tail-call optimization. More complex computations are now possible.
 - 2024-01-13: Simplified type system to only have 5 types.
+- 2024-01-14: Finished expression-to-AST-diagram, added more tests, added more support for arrays and improved printing.
 
 ## Milestones
 
@@ -98,7 +116,7 @@ print(is_prime(7));
 - [x] characters
 - [x] booleans
 - [x] function declaration and call
-- [ ] arrays and strings
+- [x] arrays and strings
 - [ ] built-in functions
     - [x] print
     - [x] matching

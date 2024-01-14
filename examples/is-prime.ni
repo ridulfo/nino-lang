@@ -20,4 +20,8 @@ let print_primes:fn = (current:num, end:num):num => true ? {
     print_primes(current + 1, end)
 };
 
+print("Let's calculate primes!");
+let start:num = time();
 print_primes(10000000, 10000200);
+print("Time in milliseconds:");
+print(time()-start);
