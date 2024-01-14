@@ -1,5 +1,5 @@
-let a:i32 = 10;
-let b:i32 = 5;
+let a:num = 10;
+let b:num = 5;
 
 print(a);
 

@@ -1,2 +1,2 @@
-let str:[u8] = "Hello, world!";
+let str:[char] = "Hello, world!";
 print(str);

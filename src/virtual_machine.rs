@@ -44,9 +44,9 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
 
     loop {
         return match current_expression {
-            Expression::Number(..)
-            | Expression::Bool(..)
-            | Expression::Array(..) => current_expression,
+            Expression::Number(..) | Expression::Bool(..) | Expression::Array(..) => {
+                current_expression
+            }
             Expression::Identifier(identifier) => {
                 let declaration = current_symbols.get(&identifier).unwrap();
                 let expression = declaration.expression.clone();
@@ -101,7 +101,10 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
                     (Expression::Number(left_val), Expression::Number(right_val)) => {
                         binary_float_float(left_val, right_val, operator)
                     }
-                    (Expression::Array(left_type, left_val), Expression::Array(right_type, right_val)) => match operator {
+                    (
+                        Expression::Array(left_type, left_val),
+                        Expression::Array(right_type, right_val),
+                    ) => match operator {
                         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
                         BinaryOperator::Add => {
                             assert_eq!(left_type, right_type, "Invalid types");

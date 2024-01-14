@@ -1,4 +1,4 @@
-let increment:fn = (x:i32, i:i32):i32 => i ? {
+let increment:fn = (x:num, i:num):num => i ? {
     0 => x,
     increment(x + 1, i - 1)
 };
