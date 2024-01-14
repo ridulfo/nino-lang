@@ -138,7 +138,7 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
 }
 
 pub struct VirtualMachine {
-    symbols: HashMap<String, Declaration>,
+    pub symbols: HashMap<String, Declaration>,
 }
 
 impl VirtualMachine {
@@ -152,7 +152,7 @@ impl VirtualMachine {
         evaluate(expression, &self.symbols)
     }
 
-    pub fn interpret(&mut self, program: Vec<Item>) {
+    pub fn run(&mut self, program: Vec<Item>) {
         for statement in program {
             match statement {
                 Item::Declaration(declaration) => {
@@ -178,11 +178,12 @@ impl VirtualMachine {
 mod tests {
     use crate::{
         lexer::Lexer,
-        parser::{BinaryOperation, Parser},
+        parser::{BinaryOperation, Parser, Type},
     };
 
     use super::*;
 
+    /// Testing a evalutation of a simple expression (1 + 2)
     #[test]
     fn test_expression() {
         // Test adding two integers
@@ -198,6 +199,7 @@ mod tests {
         assert_eq!(result, Expression::Number(3.0));
     }
 
+    /// Testing a declaration of factorial function and calling it
     #[test]
     fn test_recursion() {
         let declare = "let factorial:fn = (n:num):num => n ? {
@@ -210,7 +212,7 @@ mod tests {
         let mut parser = Parser::new(&tokens);
         let declaration_ast = parser.parse();
 
-        let input = "factorial(5);";
+        let input = "let result:num = factorial(5);";
         let mut lexer = Lexer::new(input);
         let tokens = lexer.tokenize();
         let mut parser = Parser::new(&tokens);
@@ -218,17 +220,24 @@ mod tests {
 
         let mut vm = VirtualMachine::new();
 
-        vm.interpret(declaration_ast);
-        println!("{:?}", vm.symbols);
-        vm.interpret(expression);
+        vm.run(declaration_ast);
+        vm.run(expression);
+        let result = *vm.symbols.get("result").unwrap().expression.clone();
+        assert_eq!(result, Expression::Number(120.0));
+
+        let function = vm.symbols.get("factorial").unwrap();
+        assert_eq!(function.name, "factorial");
+        assert_eq!(function.type_, Type::Function);
+
     }
 
+    /// Testing decalration of arrays and concatenation
     #[test]
     fn test_array_operations() {
         let declare = "let array:[num] = [1, 2, 3, 4, 5];
         let array2:[num] = [6, 7, 8, 9, 10];
-        let array3:[num] = array + array2;
-        print(array3);";
+        let array3:[num] = array + array2;";
+
         let mut lexer = Lexer::new(declare);
         let tokens = lexer.tokenize();
         let mut parser = Parser::new(&tokens);
@@ -236,12 +245,33 @@ mod tests {
 
         let mut vm = VirtualMachine::new();
 
-        vm.interpret(program);
+        vm.run(program);
+
+        let result = *vm.symbols.get("array3").unwrap().expression.clone();
+        assert_eq!(
+            result,
+            Expression::Array(
+                Type::Number,
+                vec![
+                    Expression::Number(1.0),
+                    Expression::Number(2.0),
+                    Expression::Number(3.0),
+                    Expression::Number(4.0),
+                    Expression::Number(5.0),
+                    Expression::Number(6.0),
+                    Expression::Number(7.0),
+                    Expression::Number(8.0),
+                    Expression::Number(9.0),
+                    Expression::Number(10.0)
+                ]
+            )
+        );
     }
 
+    /// Testing declaration of a string and concatenation
     #[test]
     fn test_string() {
-        let declare = "let string:[char] = \"Hello, World!\";";
+        let declare = "let string:[char] = \"Hello\" + \", World!\";";
 
         let mut lexer = Lexer::new(declare);
         let tokens = lexer.tokenize();
@@ -249,17 +279,42 @@ mod tests {
         let program = parser.parse();
 
         let mut vm = VirtualMachine::new();
-        vm.interpret(program);
+        vm.run(program);
+
+        let result = *vm.symbols.get("string").unwrap().expression.clone();
+        assert_eq!(
+            result,
+            Expression::Array(
+                Type::Char,
+                vec![
+                    Expression::Char(b'H'),
+                    Expression::Char(b'e'),
+                    Expression::Char(b'l'),
+                    Expression::Char(b'l'),
+                    Expression::Char(b'o'),
+                    Expression::Char(b','),
+                    Expression::Char(b' '),
+                    Expression::Char(b'W'),
+                    Expression::Char(b'o'),
+                    Expression::Char(b'r'),
+                    Expression::Char(b'l'),
+                    Expression::Char(b'd'),
+                    Expression::Char(b'!')
+                ]
+            )
+        );
     }
 
+
+
+    /// Testing tail call optimization
     #[test]
     fn tail_optimization() {
         let declare = "let increment:fn = (x:num, i:num):num => i ? {
     0 => x,
     increment(x + 1, i - 1)
 };
-
-print(increment(0, 20000));";
+let incremented:num = increment(0, 20000);";
         let mut lexer = Lexer::new(declare);
         let tokens = lexer.tokenize();
         let mut parser = Parser::new(&tokens);
@@ -267,6 +322,9 @@ print(increment(0, 20000));";
 
         let mut vm = VirtualMachine::new();
 
-        vm.interpret(program);
+        vm.run(program);
+
+        let result = *vm.symbols.get("incremented").unwrap().expression.clone();
+        assert_eq!(result, Expression::Number(20000.0));
     }
 }

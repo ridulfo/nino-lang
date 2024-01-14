@@ -19,5 +19,5 @@ fn main() {
     let ast = parser.parse();
 
     let mut vm = VirtualMachine::new();
-    vm.interpret(ast);
+    vm.run(ast);
 }
