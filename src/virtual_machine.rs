@@ -342,4 +342,25 @@ let incremented:num = increment(0, 20000);";
         let result = *vm.symbols.get("incremented").unwrap().expression.clone();
         assert_eq!(result, Expression::Number(20000.0));
     }
+
+    /// Testing scope
+    #[test]
+    fn test_scope() {
+        let declare = "let x:num = 0;
+let func:fn = (x:num):num=>x+1;
+func(1);
+";
+
+        let mut lexer = Lexer::new(declare);
+        let tokens = lexer.tokenize();
+        let mut parser = Parser::new(&tokens);
+        let program = parser.parse();
+
+        let mut vm = VirtualMachine::new();
+
+        vm.run(program);
+
+        let result = *vm.symbols.get("x").unwrap().expression.clone();
+        assert_eq!(result, Expression::Number(0.0));
+    }
 }
