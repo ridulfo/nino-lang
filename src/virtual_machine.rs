@@ -1,8 +1,10 @@
-use std::collections::HashMap;
+use std::cell::RefCell;
 use std::mem::discriminant;
+use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::parser::{BinaryOperator, Declaration, Expression, Item};
+use crate::scoped_symbols::ScopedSymbols;
 
 fn print(expression: Expression, end: &str) -> Expression {
     match &expression {
@@ -56,9 +58,9 @@ fn binary_float_float(left_val: f64, right_val: f64, operator: BinaryOperator) -
     }
 }
 
-fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> Expression {
+fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
     let mut current_expression = expression;
-    let mut current_symbols = symbols.clone();
+    let mut current_symbols = ScopedSymbols::with_parent(Rc::new(RefCell::new(symbols.clone())));
 
     loop {
         return match current_expression {
@@ -156,13 +158,13 @@ fn evaluate(expression: Expression, symbols: &HashMap<String, Declaration>) -> E
 }
 
 pub struct VirtualMachine {
-    pub symbols: HashMap<String, Declaration>,
+    pub symbols: ScopedSymbols,
 }
 
 impl VirtualMachine {
     pub fn new() -> VirtualMachine {
         VirtualMachine {
-            symbols: HashMap::new(),
+            symbols: ScopedSymbols::new(),
         }
     }
 
