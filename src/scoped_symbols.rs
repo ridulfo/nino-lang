@@ -1,14 +1,14 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::parser::Declaration;
 
 #[derive(Clone)]
-pub struct ScopedSymbols {
+pub struct ScopedSymbols<'a> {
     symbols: HashMap<String, Declaration>,
-    parent: Option<Rc<RefCell<ScopedSymbols>>>,
+    parent: Option<&'a ScopedSymbols<'a>>,
 }
 
-impl ScopedSymbols {
+impl<'a> ScopedSymbols<'a> {
     pub fn new() -> Self {
         ScopedSymbols {
             symbols: HashMap::new(),
@@ -16,7 +16,7 @@ impl ScopedSymbols {
         }
     }
 
-    pub fn with_parent(parent: Rc<RefCell<ScopedSymbols>>) -> Self {
+    pub fn with_parent<'parent>(parent: &'a ScopedSymbols) -> Self {
         ScopedSymbols {
             symbols: HashMap::new(),
             parent: Some(parent),
@@ -30,8 +30,8 @@ impl ScopedSymbols {
     pub fn get(&self, key: &str) -> Option<Declaration> {
         match self.symbols.get(key) {
             Some(declaration) => Some(declaration.clone()),
-            None => match &self.parent {
-                Some(parent) => parent.borrow().get(key),
+            None => match self.parent {
+                Some(parent) => parent.get(key),
                 None => None,
             },
         }
@@ -56,7 +56,7 @@ mod tests {
             },
         );
 
-        let mut symbols2 = ScopedSymbols::with_parent(Rc::new(RefCell::new(symbols)));
+        let mut symbols2 = ScopedSymbols::with_parent(&symbols);
         symbols2.insert(
             "b".to_string(),
             Declaration {
