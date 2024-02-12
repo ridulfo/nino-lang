@@ -1,6 +1,4 @@
-use std::cell::RefCell;
 use std::mem::discriminant;
-use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::parser::{BinaryOperator, Declaration, Expression, Item};
@@ -60,7 +58,7 @@ fn binary_float_float(left_val: f64, right_val: f64, operator: BinaryOperator) -
 
 fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
     let mut current_expression = expression;
-    let mut current_symbols = ScopedSymbols::with_parent(Rc::new(RefCell::new(symbols.clone())));
+    let mut current_symbols = ScopedSymbols::with_parent(&symbols);
 
     loop {
         return match current_expression {
@@ -157,12 +155,12 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
     }
 }
 
-pub struct VirtualMachine {
-    pub symbols: ScopedSymbols,
+pub struct VirtualMachine<'a> {
+    pub symbols: ScopedSymbols<'a>,
 }
 
-impl VirtualMachine {
-    pub fn new() -> VirtualMachine {
+impl<'a> VirtualMachine<'a> {
+    pub fn new() -> VirtualMachine<'a> {
         VirtualMachine {
             symbols: ScopedSymbols::new(),
         }
