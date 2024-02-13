@@ -50,7 +50,7 @@ Let's calculate primes!
 10000169
 10000189
 Time in milliseconds:
-672
+47
     </pre>
 </details>
 
@@ -106,10 +106,9 @@ print(is_prime(7));
 - 2023-10-04: Added tail-call optimization. More complex computations are now possible.
 - 2024-01-13: Simplified type system to only have 5 types.
 - 2024-01-14: Finished expression-to-AST-diagram, added more tests, added more support for arrays and improved printing.
+- 2024-02-12: Interpreter now keeps symbols in [scoped-symbols](src/scoped_symbols.rs) leading to a 10x speed improvement compared to the initial symbol table.
 
 ## Milestones
-
-
 
 - [x] Define complete syntax
 - [x] numbers
