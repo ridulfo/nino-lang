@@ -220,7 +220,7 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<TokenKind>>) -> Expression {
             Expression::Array(Type::Number, elements)
         }
         _ => panic!(
-            "\nExpected identifier, integer, float, or left paren, got {:?}\n",
+            "\nExpected identifier, number, char, boolean, string or left bracket, got {:?}",
             tokens.peek().unwrap()
         ),
     };

@@ -1,4 +1,4 @@
-use std::{iter::Peekable, str::Chars};
+use std::{iter::Peekable, str::CharIndices};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
@@ -54,20 +54,34 @@ pub enum TokenKind {
     EOF,
 }
 
-fn parse_number(chars: &mut Peekable<Chars>) -> TokenKind {
+#[derive(PartialEq, Debug)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub begin: usize,
+    pub end: usize,
+}
+
+fn parse_number(chars: &mut Peekable<CharIndices>) -> Token {
+    let begin = chars.peek().unwrap().0;
+    let mut end = begin;
     let mut string = String::new();
-    while let Some(c) = chars.peek() {
+    while let Some((i, c)) = chars.peek() {
         match c {
             '0'..='9' | '.' => string.push(*c),
             _ => break,
         }
+        end = *i;
         chars.next();
     }
-    TokenKind::Number(string.parse::<f64>().unwrap())
+    Token {
+        kind: TokenKind::Number(string.parse::<f64>().unwrap()),
+        begin,
+        end,
+    }
 }
 
-fn consume_whitespace(chars: &mut Peekable<Chars>) {
-    while let Some(&c) = chars.peek() {
+fn consume_whitespace(chars: &mut Peekable<CharIndices>) {
+    while let Some(&(_, c)) = chars.peek() {
         if !c.is_whitespace() {
             break;
         }
@@ -77,175 +91,225 @@ fn consume_whitespace(chars: &mut Peekable<Chars>) {
 
 /// First token is a quote, so we consume it and then we consume all the
 /// string until we find another quote.
-fn parse_string(chars: &mut Peekable<Chars>) -> TokenKind {
-    assert_eq!(chars.next(), Some('"'));
+fn parse_string(chars: &mut Peekable<CharIndices>) -> Token {
+    let begin = chars.peek().unwrap().0;
+    assert_eq!(chars.next().unwrap().1, '"');
+    let mut end = begin;
     let mut string = String::new();
-    while let Some(&c) = chars.peek() {
+    while let Some(&(i, c)) = chars.peek() {
         if c == '"' {
+            end = i;
             chars.next();
             break;
         }
         string.push(c);
         chars.next();
     }
-    TokenKind::String(string)
+    Token {
+        kind: TokenKind::String(string),
+        begin,
+        end,
+    }
 }
 
 /// Parses a type, which is a string of characters that are alphanumeric
-fn parse_type(chars: &mut Peekable<Chars>) -> TokenKind {
+fn parse_type(chars: &mut Peekable<CharIndices>) -> Token {
+    let begin = chars.peek().unwrap().0;
+    let mut end = begin;
     let mut string = String::new();
-    while let Some(&c) = chars.peek() {
+    while let Some(&(i, c)) = chars.peek() {
         match c {
             'a'..='z' | '0'..='9' | '_' | '[' | ']' => string.push(c),
             _ => break,
         }
+        end = i;
         chars.next();
     }
-    TokenKind::Type(string)
+    Token {
+        kind: TokenKind::Type(string),
+        begin,
+        end,
+    }
 }
 
-fn parse_word(chars: &mut Peekable<Chars>) -> TokenKind {
+fn parse_word(chars: &mut Peekable<CharIndices>) -> Token {
+    let begin = chars.peek().unwrap().0;
+    let mut end = begin;
     let mut string = String::new();
-    while let Some(&s) = chars.peek() {
+    while let Some(&(i, s)) = chars.peek() {
         if !s.is_alphanumeric() && s != '_' {
             break;
         }
+            end = i;
         string.push(s);
         chars.next();
     }
-    match string.as_str() {
+
+    let kind = match string.as_str() {
         "let" => TokenKind::Let,
         "fn" => TokenKind::Function,
         "mod" => TokenKind::Modulus,
         "true" => TokenKind::Boolean(true),
         "false" => TokenKind::Boolean(false),
         _ => TokenKind::Identifier(string),
+    };
+
+    Token {
+        kind,
+        begin,
+        end,
     }
 }
 
-pub struct Lexer<'a> {
-    chars: Peekable<Chars<'a>>,
-}
+pub fn tokenize(input: &str) -> Vec<Token> {
+    let mut chars: Peekable<CharIndices> = input.char_indices().peekable();
+    let mut tokens: Vec<Token> = Vec::new();
 
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
-        Lexer {
-            chars: input.chars().peekable(),
-        }
-    }
+    while chars.peek().is_some() {
+        consume_whitespace(&mut chars); // Needed because early continue skips the bottom consume_whitespace
+        let &(begin, c) = chars.peek().unwrap();
 
-    pub fn tokenize(&mut self) -> Vec<TokenKind> {
-        let mut tokens = Vec::new();
-
-        while self.chars.peek().is_some() {
-            consume_whitespace(&mut self.chars); // Needed because early continue skips the bottom consume_whitespace
-            let c = self.chars.peek().unwrap();
-
-            let token = match c {
-                'a'..='z' => {
-                    tokens.push(parse_word(&mut self.chars));
-                    continue;
-                }
-                '0'..='9' => {
-                    tokens.push(parse_number(&mut self.chars));
-                    continue;
-                }
-                '"' => {
-                    tokens.push(parse_string(&mut self.chars));
-                    continue;
-                }
-                ':' => {
-                    tokens.push(TokenKind::Colon);
-                    self.chars.next();
-                    consume_whitespace(&mut self.chars);
-                    tokens.push(parse_type(&mut self.chars));
-                    continue;
-                }
-                '!' => {
-                    self.chars.next();
-                    tokens.push(match self.chars.peek() {
-                        Some('=') => {
-                            self.chars.next(); // consume the '='
+        let token = match c {
+            'a'..='z' => {
+                tokens.push(parse_word(&mut chars));
+                continue;
+            }
+            '0'..='9' => {
+                tokens.push(parse_number(&mut chars));
+                continue;
+            }
+            '"' => {
+                tokens.push(parse_string(&mut chars));
+                continue;
+            }
+            ':' => {
+                tokens.push(Token {
+                    kind: TokenKind::Colon,
+                    begin,
+                    end: begin,
+                });
+                chars.next();
+                consume_whitespace(&mut chars);
+                tokens.push(parse_type(&mut chars));
+                continue;
+            }
+            '!' => {
+                let mut end = begin;
+                chars.next();
+                tokens.push(Token {
+                    kind: match chars.peek().unwrap().1 {
+                        '=' => {
+                            end = chars.peek().unwrap().0;
+                            chars.next(); // consume the '='
                             TokenKind::NotEqual
                         }
                         _ => TokenKind::Not,
-                    });
-                    continue;
-                }
-                '=' => {
-                    self.chars.next(); // consume the '='
-                    tokens.push(match self.chars.peek() {
-                        Some('=') => {
-                            self.chars.next(); // consume the '='
-                            TokenKind::Equal
-                        }
-                        Some('>') => {
-                            self.chars.next(); // consume the '>'
-                            TokenKind::Arrow
-                        }
-                        _ => TokenKind::Assignment,
-                    });
-                    continue;
-                }
-                '<' => {
-                    self.chars.next();
-                    tokens.push(match self.chars.peek() {
-                        Some('=') => {
-                            self.chars.next();
-                            TokenKind::LessEqualThan
-                        }
-                        _ => TokenKind::LessThan,
-                    });
-                    continue;
-                }
-                '>' => {
-                    self.chars.next();
-                    tokens.push(match self.chars.peek() {
-                        Some('=') => {
-                            self.chars.next();
-                            TokenKind::GreaterEqualThan
-                        }
-                        _ => TokenKind::GreaterThan,
-                    });
-                    continue;
-                }
-                '(' => TokenKind::LeftParen,
-                ')' => TokenKind::RightParen,
-                '[' => TokenKind::LeftBracket,
-                ']' => TokenKind::RightBracket,
-                '{' => TokenKind::LeftBrace,
-                '}' => TokenKind::RightBrace,
-                ',' => TokenKind::Comma,
-                ';' => TokenKind::Semicolon,
-                '|' => TokenKind::Pipe,
-                '+' => TokenKind::Addition,
-                '-' => TokenKind::Subtraction,
-                '*' => TokenKind::Multiplication,
-                '/' => TokenKind::Division,
-                '?' => TokenKind::Question,
-                '#' => {
-                    while let Some(&c) = self.chars.peek() {
-                        if c == '\n' {
-                            break;
-                        }
-                        self.chars.next();
+                    },
+                    begin,
+                    end,
+                });
+                continue;
+            }
+            '=' => {
+                let mut end = begin;
+                chars.next(); // consume the '='
+                let kind = match chars.peek().unwrap().1 {
+                    '=' => {
+                        end = chars.peek().unwrap().0;
+                        chars.next(); // consume the '='
+                        TokenKind::Equal
                     }
-                    continue;
+                    '>' => {
+                        end = chars.peek().unwrap().0;
+                        chars.next(); // consume the '>'
+                        TokenKind::Arrow
+                    }
+                    _ => TokenKind::Assignment,
+                };
+                tokens.push(Token {
+                    kind,
+                    begin,
+                    end,
+                });
+                continue;
+            }
+            '<' => {
+                chars.next();
+                let kind = match chars.peek().unwrap().1 {
+                    '=' => {
+                        chars.next();
+                        TokenKind::LessEqualThan
+                    }
+                    _ => TokenKind::LessThan,
+                };
+                tokens.push(Token {
+                    kind,
+                    begin,
+                    end: chars.peek().unwrap().0,
+                });
+                continue;
+            }
+            '>' => {
+                chars.next();
+                let kind = match chars.peek().unwrap().1 {
+                    '=' => {
+                        chars.next();
+                        TokenKind::GreaterEqualThan
+                    }
+                    _ => TokenKind::GreaterThan,
+                };
+                tokens.push(Token {
+                    kind,
+                    begin,
+                    end: chars.peek().unwrap().0,
+                });
+                continue;
+            }
+            '(' => TokenKind::LeftParen,
+            ')' => TokenKind::RightParen,
+            '[' => TokenKind::LeftBracket,
+            ']' => TokenKind::RightBracket,
+            '{' => TokenKind::LeftBrace,
+            '}' => TokenKind::RightBrace,
+            ',' => TokenKind::Comma,
+            ';' => TokenKind::Semicolon,
+            '|' => TokenKind::Pipe,
+            '+' => TokenKind::Addition,
+            '-' => TokenKind::Subtraction,
+            '*' => TokenKind::Multiplication,
+            '/' => TokenKind::Division,
+            '?' => TokenKind::Question,
+            '#' => {
+                while let Some(&(_, c)) = chars.peek() {
+                    if c == '\n' {
+                        break;
+                    }
+                    chars.next();
                 }
-                _ => panic!("Unexpected character: {}", c),
-            };
-            tokens.push(token);
-            self.chars.next();
-            consume_whitespace(&mut self.chars); // if the last character is a whitespace
-        }
-        tokens.push(TokenKind::EOF);
-
-        tokens
+                continue;
+            }
+            _ => panic!("Unexpected character: {}", c),
+        };
+        tokens.push(Token {
+            kind: token,
+            begin,
+            end: chars.peek().unwrap().0,
+        });
+        chars.next();
+        consume_whitespace(&mut chars); // if the last character is a whitespace
     }
+    tokens.push(Token {
+        kind: TokenKind::EOF,
+        begin: input.len()-1,
+        end: input.len()-1,
+    });
+
+    tokens
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     fn compare_tokens(actual: Vec<TokenKind>, expected: Vec<TokenKind>) {
@@ -262,85 +326,89 @@ mod tests {
     #[test]
     fn test_parse_number() {
         let input = "123 345";
-        let chars = &mut input.chars().peekable();
-        let token = parse_number(chars);
-        assert_eq!(token, TokenKind::Number(123.0));
-        assert_eq!(chars.next(), Some(' '));
+        let mut chars = input.char_indices().peekable();
+        let token = parse_number(&mut chars);
+        assert_eq!(token, Token { kind: TokenKind::Number(123.0), begin: 0, end: 2 });
+        assert_eq!(chars.next(), Some((3, ' ')));
+        consume_whitespace(&mut chars);
+        let token = parse_number(&mut chars);
+        assert_eq!(token, Token { kind: TokenKind::Number(345.0), begin: 4, end: 6 });
     }
 
     #[test]
     fn test_parse_float() {
         let input = "123.456";
-        let token = parse_number(&mut input.chars().peekable());
-        assert_eq!(token, TokenKind::Number(123.456));
+        let mut chars = input.char_indices().peekable();
+        let token = parse_number(&mut chars);
+        assert_eq!(token, Token { kind: TokenKind::Number(123.456), begin: 0, end: 6 });
     }
 
     #[test]
     fn test_consumes_whitespace() {
         let input = "   123";
-        let chars = &mut input.chars().peekable();
+        let chars = &mut input.char_indices().peekable();
         consume_whitespace(chars);
-        assert_eq!(chars.next(), Some('1'));
+        let next = chars.next().unwrap();
+        assert_eq!(next, (3, '1'));
     }
 
     #[test]
     fn test_parse_string() {
         let input = "\"hello world\"";
-        let token = parse_string(&mut input.chars().peekable());
-        assert_eq!(token, TokenKind::String("hello world".to_string()));
+        let token = parse_string(&mut input.char_indices().peekable());
+        assert_eq!(token, Token { kind: TokenKind::String("hello world".to_string()), begin: 0, end: 12 });
     }
 
     #[test]
     fn test_parse_expression() {
         let input = "let x:num = 3;";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
-        assert_eq!(
-            tokens,
-            vec![
-                TokenKind::Let,
-                TokenKind::Identifier("x".to_string()),
-                TokenKind::Colon,
-                TokenKind::Type("num".to_string()),
-                TokenKind::Assignment,
-                TokenKind::Number(3.0),
-                TokenKind::Semicolon,
-                TokenKind::EOF,
-            ]
-        );
+        let tokens = tokenize(input);
+
+        assert_eq!(tokens.len(), 8);
+
+        assert_eq!(tokens[0], Token { kind: TokenKind::Let, begin: 0, end: 2 });
+
+        assert_eq!(tokens[1], Token { kind: TokenKind::Identifier("x".to_string()), begin: 4, end: 4 });
+        
+        assert_eq!(tokens[2], Token { kind: TokenKind::Colon, begin: 5, end: 5 });
+
+        assert_eq!(tokens[3], Token { kind: TokenKind::Type("num".to_string()), begin: 6, end: 8 });
+
+        assert_eq!(tokens[4], Token { kind: TokenKind::Assignment, begin: 10, end: 10 });
+
+        assert_eq!(tokens[5], Token { kind: TokenKind::Number(3.0), begin: 12, end: 12 });
+
+        assert_eq!(tokens[6], Token { kind: TokenKind::Semicolon, begin: 13, end: 13 });
+
+        assert_eq!(tokens[7], Token { kind: TokenKind::EOF, begin: 13, end: 13 });
     }
 
     #[test]
     fn test_parse_equalities() {
         let input = "1 == 2 != 3 > 4 < 5 >= 6 <= 7";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
-        assert_eq!(
-            tokens,
-            vec![
-                TokenKind::Number(1.0),
-                TokenKind::Equal,
-                TokenKind::Number(2.0),
-                TokenKind::NotEqual,
-                TokenKind::Number(3.0),
-                TokenKind::GreaterThan,
-                TokenKind::Number(4.0),
-                TokenKind::LessThan,
-                TokenKind::Number(5.0),
-                TokenKind::GreaterEqualThan,
-                TokenKind::Number(6.0),
-                TokenKind::LessEqualThan,
-                TokenKind::Number(7.0),
-                TokenKind::EOF,
-            ]
-        );
+        let tokens = tokenize(input);
+        
+        assert_eq!(tokens.len(), 14);
+        assert_eq!(tokens[0], Token { kind: TokenKind::Number(1.0), begin: 0, end: 0 });
+        assert_eq!(tokens[1], Token { kind: TokenKind::Equal, begin: 2, end: 3 });
+        assert_eq!(tokens[2], Token { kind: TokenKind::Number(2.0), begin: 5, end: 5 });
+        assert_eq!(tokens[3], Token { kind: TokenKind::NotEqual, begin: 7, end: 8 });
+        assert_eq!(tokens[4], Token { kind: TokenKind::Number(3.0), begin: 10, end: 10 });
+        assert_eq!(tokens[5], Token { kind: TokenKind::GreaterThan, begin: 12, end: 13 });
+        assert_eq!(tokens[6], Token { kind: TokenKind::Number(4.0), begin: 14, end: 14 });
+        assert_eq!(tokens[7], Token { kind: TokenKind::LessThan, begin: 16, end: 17 });
+        assert_eq!(tokens[8], Token { kind: TokenKind::Number(5.0), begin: 18, end: 18 });
+        assert_eq!(tokens[9], Token { kind: TokenKind::GreaterEqualThan, begin: 20, end: 22 });
+        assert_eq!(tokens[10], Token { kind: TokenKind::Number(6.0), begin: 23, end: 23 });
+        assert_eq!(tokens[11], Token { kind: TokenKind::LessEqualThan, begin: 25, end: 27 });
+        assert_eq!(tokens[12], Token { kind: TokenKind::Number(7.0), begin: 28, end: 28 });
+        assert_eq!(tokens[13], Token { kind: TokenKind::EOF, begin: 28, end: 28 });
     }
 
     #[test]
     fn test_equality_expression() {
         let input = "let x:bool = 1+3>2 == 1;";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
         assert_eq!(
             tokens,
             vec![
@@ -365,8 +433,7 @@ mod tests {
     #[test]
     fn test_array() {
         let input = "let x:[num] = [1,2,3];";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
         assert_eq!(
             tokens,
             vec![
@@ -393,8 +460,7 @@ mod tests {
         let input = "let x:num = 1; # This is a comment
 let y:num = 2; # This is another comment";
 
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
 
         compare_tokens(
             tokens,
@@ -425,8 +491,8 @@ let y:num = 2; # This is another comment";
     2 => 3,
     4
 };";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+
         assert_eq!(
             tokens,
             vec![
@@ -457,8 +523,7 @@ let y:num = 2; # This is another comment";
     #[test]
     fn test_string() {
         let input = "let x:[char] = \"hello world\";";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
 
         compare_tokens(
             tokens,
@@ -487,8 +552,7 @@ let y:num = 2; # This is another comment";
         true => is_prime_helper(x, 3, sqrt_x_int)
     };";
 
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
 
         compare_tokens(
             tokens,

@@ -195,7 +195,7 @@ impl<'a> VirtualMachine<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        lexer::Lexer,
+        lexer::tokenize,
         parser::{BinaryOperation, Parser, Type},
     };
 
@@ -225,14 +225,18 @@ mod tests {
     n * factorial(n - 1)
 };
         ";
-        let mut lexer = Lexer::new(declare);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(declare)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         let mut parser = Parser::new(&tokens);
         let declaration_ast = parser.parse();
 
         let input = "let result:num = factorial(5);";
-        let mut lexer = Lexer::new(input);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         let mut parser = Parser::new(&tokens);
         let expression = parser.parse();
 
@@ -255,8 +259,10 @@ mod tests {
         let array2:[num] = [6, 7, 8, 9, 10];
         let array3:[num] = array + array2;";
 
-        let mut lexer = Lexer::new(declare);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(declare)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         let mut parser = Parser::new(&tokens);
         let program = parser.parse();
 
@@ -290,8 +296,10 @@ mod tests {
     fn test_string() {
         let declare = "let string:[char] = \"Hello\" + \", World!\";";
 
-        let mut lexer = Lexer::new(declare);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(declare)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         let mut parser = Parser::new(&tokens);
         let program = parser.parse();
 
@@ -330,8 +338,10 @@ mod tests {
     increment(x + 1, i - 1)
 };
 let incremented:num = increment(0, 20000);";
-        let mut lexer = Lexer::new(declare);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(declare)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         let mut parser = Parser::new(&tokens);
         let program = parser.parse();
 
@@ -351,8 +361,10 @@ let func:fn = (x:num):num=>x+1;
 func(1);
 ";
 
-        let mut lexer = Lexer::new(declare);
-        let tokens = lexer.tokenize();
+        let tokens = tokenize(declare)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         let mut parser = Parser::new(&tokens);
         let program = parser.parse();
 
