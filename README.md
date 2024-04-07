@@ -139,3 +139,7 @@ What is this it, and what is it not?
 The goal is not to create the next big language that everybody should use. This is more of an experiment in making a minimal compiled functional programming language.
 
 I will work on this in my spare time. No guarantees can be made.
+
+## Misc
+### C Compiler
+The initial version of this language was written in C. This code has now been removed from the main branch, but can be found [here](https://github.com/ridulfo/nino-lang/tree/45b15230d315ffd4185f1ecd626909a32f547704).
