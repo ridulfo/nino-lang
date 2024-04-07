@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 
 use nino::lexer::tokenize;
+use nino::parser::parse;
 use nino::virtual_machine::VirtualMachine;
 
 fn main() {
@@ -15,8 +16,15 @@ fn main() {
     let input = fs::read_to_string(filename).expect("Failed to read file");
 
     let tokens = tokenize(&input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
-    let mut parser = nino::parser::Parser::new(&tokens);
-    let ast = parser.parse();
+
+    let ast = match parse(&tokens) {
+        Ok(ast) => ast,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
+
 
     let mut vm = VirtualMachine::new();
     vm.run(ast);

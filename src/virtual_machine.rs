@@ -196,7 +196,7 @@ impl<'a> VirtualMachine<'a> {
 mod tests {
     use crate::{
         lexer::tokenize,
-        parser::{BinaryOperation, Parser, Type},
+        parser::{parse, BinaryOperation, Type},
     };
 
     use super::*;
@@ -229,16 +229,16 @@ mod tests {
             .into_iter()
             .map(|t| t.kind)
             .collect::<Vec<_>>();
-        let mut parser = Parser::new(&tokens);
-        let declaration_ast = parser.parse();
+
+        let declaration_ast = parse(&tokens).unwrap();
+
 
         let input = "let result:num = factorial(5);";
         let tokens = tokenize(input)
             .into_iter()
             .map(|t| t.kind)
             .collect::<Vec<_>>();
-        let mut parser = Parser::new(&tokens);
-        let expression = parser.parse();
+        let expression = parse(&tokens).unwrap();
 
         let mut vm = VirtualMachine::new();
 
@@ -263,8 +263,8 @@ mod tests {
             .into_iter()
             .map(|t| t.kind)
             .collect::<Vec<_>>();
-        let mut parser = Parser::new(&tokens);
-        let program = parser.parse();
+
+        let program = parse(&tokens).unwrap();
 
         let mut vm = VirtualMachine::new();
 
@@ -300,8 +300,8 @@ mod tests {
             .into_iter()
             .map(|t| t.kind)
             .collect::<Vec<_>>();
-        let mut parser = Parser::new(&tokens);
-        let program = parser.parse();
+
+        let program = parse(&tokens).unwrap();
 
         let mut vm = VirtualMachine::new();
         vm.run(program);
@@ -342,8 +342,8 @@ let incremented:num = increment(0, 20000);";
             .into_iter()
             .map(|t| t.kind)
             .collect::<Vec<_>>();
-        let mut parser = Parser::new(&tokens);
-        let program = parser.parse();
+
+        let program = parse(&tokens).unwrap();
 
         let mut vm = VirtualMachine::new();
 
@@ -365,8 +365,8 @@ func(1);
             .into_iter()
             .map(|t| t.kind)
             .collect::<Vec<_>>();
-        let mut parser = Parser::new(&tokens);
-        let program = parser.parse();
+
+        let program = parse(&tokens).unwrap();
 
         let mut vm = VirtualMachine::new();
 

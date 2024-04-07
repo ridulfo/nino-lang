@@ -2,7 +2,19 @@
 
 use std::{iter::Peekable, slice::Iter};
 
-use crate::lexer::TokenKind;
+use crate::lexer::{Token, TokenKind};
+
+#[derive(Debug, PartialEq)]
+pub struct ParserError {
+    pub message: String,
+    pub token: Token,
+}
+
+impl std::fmt::Display for ParserError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{} at {:?}", self.message, self.token)
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Type {
@@ -425,36 +437,46 @@ pub fn parse_declaration(tokens: &mut Peekable<Iter<TokenKind>>) -> Declaration 
     }
 }
 
-#[derive(Debug)]
-pub struct Parser<'a> {
-    tokens: Peekable<Iter<'a, TokenKind>>,
-}
-
-impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a [TokenKind]) -> Self {
-        Self {
-            tokens: tokens.iter().peekable(),
-        }
-    }
-
-    pub fn parse(&mut self) -> Vec<Item> {
-        let mut items = vec![];
-        while let Some(token) = self.tokens.peek() {
-            match token {
-                TokenKind::EOF => break,
-                TokenKind::Let => {
-                    let declaration = parse_declaration(&mut self.tokens);
-                    items.push(Item::Declaration(declaration));
-                }
-                _ => {
-                    let expression = parse_expression(&mut self.tokens);
-                    items.push(Item::Expression(expression));
-                    self.tokens.next(); // Consume semicolon
+pub fn parse(tokens: &[TokenKind]) -> Result<Vec<Item>, ParserError> {
+    let mut tokens = tokens.iter().peekable();
+    let mut items = vec![];
+    while let Some(token) = tokens.peek() {
+        match token {
+            TokenKind::EOF => break,
+            TokenKind::Let => {
+                let declaration = parse_declaration(&mut tokens);
+                items.push(Item::Declaration(declaration));
+            }
+            _ => {
+                let expression = parse_expression(&mut tokens);
+                items.push(Item::Expression(expression));
+                match tokens.next() {
+                    Some(TokenKind::Semicolon) => {}
+                    Some(token) => {
+                        return Err(ParserError {
+                            message: format!("Expected semicolon, got {:?}", token),
+                            token: Token {
+                                kind: token.clone(),
+                                begin: 0,
+                                end: 0,
+                            },
+                        })
+                    }
+                    None => {
+                        return Err(ParserError {
+                            message: "Expected semicolon, got EOF".to_string(),
+                            token: Token {
+                                kind: TokenKind::EOF,
+                                begin: 0,
+                                end: 0,
+                            },
+                        })
+                    }
                 }
             }
         }
-        items
     }
+    Ok(items)
 }
 
 #[cfg(test)]
@@ -498,8 +520,7 @@ mod tests {
             TokenKind::Semicolon,
             TokenKind::EOF,
         ];
-        let mut parser = Parser::new(&tokens);
-        let declaration = parse_declaration(&mut parser.tokens);
+        let declaration = parse_declaration(&mut tokens.iter().peekable());
         assert_eq!(
             declaration,
             Declaration {
@@ -523,8 +544,7 @@ mod tests {
             TokenKind::Semicolon,
             TokenKind::EOF,
         ];
-        let mut parser = Parser::new(&tokens);
-        let declaration = parse_declaration(&mut parser.tokens);
+        let declaration = parse_declaration(&mut tokens.iter().peekable());
         assert_eq!(
             declaration,
             Declaration {
@@ -548,8 +568,7 @@ mod tests {
             TokenKind::Semicolon,
             TokenKind::EOF,
         ];
-        let mut parser = Parser::new(&tokens);
-        let declaration = parse_declaration(&mut parser.tokens);
+        let declaration = parse_declaration(&mut tokens.iter().peekable());
         assert_eq!(
             declaration,
             Declaration {
@@ -587,8 +606,7 @@ mod tests {
             TokenKind::Semicolon,
             TokenKind::EOF,
         ];
-        let mut parser = Parser::new(&tokens);
-        let declaration = parse_declaration(&mut parser.tokens);
+        let declaration = parse_declaration(&mut tokens.iter().peekable());
         assert_eq!(
             declaration,
             Declaration {
@@ -635,8 +653,7 @@ mod tests {
             TokenKind::Semicolon,
             TokenKind::EOF,
         ];
-        let mut parser = Parser::new(&tokens);
-        let declaration = parse_declaration(&mut parser.tokens);
+        let declaration = parse_declaration(&mut tokens.iter().peekable());
         assert_eq!(
             declaration,
             Declaration {
@@ -662,8 +679,7 @@ mod tests {
             TokenKind::Equal,
             TokenKind::Number(1.0),
         ];
-        let mut parser = Parser::new(&tokens);
-        let expression = parse_equality(&mut parser.tokens);
+        let expression = parse_equality(&mut tokens.iter().peekable());
         assert_eq!(
             expression,
             Expression::BinaryOperation(BinaryOperation {
@@ -683,8 +699,7 @@ mod tests {
             TokenKind::Number(1.0),
             TokenKind::RightParen,
         ];
-        let mut parser = Parser::new(&tokens);
-        let expression = parse_expression(&mut parser.tokens);
+        let expression = parse_expression(&mut tokens.iter().peekable());
         assert_eq!(
             expression,
             Expression::FunctionCall(FunctionCall {
@@ -721,8 +736,7 @@ mod tests {
             TokenKind::Semicolon,
         ];
 
-        let mut parser = Parser::new(&tokens);
-        let items = parser.parse();
+        let items = parse(&tokens).unwrap();
         assert_eq!(
             items[0],
             Item::Declaration(Declaration {
@@ -776,8 +790,7 @@ mod tests {
             TokenKind::EOF,
         ];
 
-        let mut parser = Parser::new(&tokens);
-        let items = parser.parse();
+        let items = parse(&tokens).unwrap();
 
         assert_eq!(
             items[0],
@@ -816,8 +829,7 @@ mod tests {
             TokenKind::EOF,
         ];
 
-        let mut parser = Parser::new(&tokens);
-        let items = parser.parse();
+        let items = parse(&tokens).unwrap();
 
         assert_eq!(
             items[0],
@@ -850,8 +862,7 @@ mod tests {
             TokenKind::EOF,
         ];
 
-        let mut parser = Parser::new(&tokens);
-        let items = parser.parse();
+        let items = parse(&tokens).unwrap();
 
         assert_eq!(
             items[0],
@@ -890,8 +901,7 @@ mod tests {
             TokenKind::Semicolon,
         ];
 
-        let mut parser = Parser::new(&tokens);
-        let items = parser.parse();
+        let items = parse(&tokens).unwrap();
         assert_eq!(
             items[0],
             Item::Declaration(Declaration {

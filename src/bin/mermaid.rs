@@ -1,4 +1,7 @@
-use nino::{lexer::tokenize, parser::{BinaryOperator, Expression}};
+use nino::{
+    lexer::tokenize,
+    parser::{BinaryOperator, Expression},
+};
 use std::env;
 static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
@@ -54,9 +57,18 @@ fn main() {
     chart.push_str("\n");
     chart.push_str("```mermaid\nflowchart TD\n");
 
-    let tokens = tokenize(code).into_iter().map(|t| t.kind).collect::<Vec<_>>();
-    let mut parser = nino::parser::Parser::new(&tokens);
-    let ast = parser.parse();
+    let tokens = tokenize(code)
+        .into_iter()
+        .map(|t| t.kind)
+        .collect::<Vec<_>>();
+
+    let ast = match nino::parser::parse(&tokens) {
+        Ok(ast) => ast,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
 
     let expression = ast.first().unwrap();
     match expression {
