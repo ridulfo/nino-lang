@@ -225,19 +225,12 @@ mod tests {
     n * factorial(n - 1)
 };
         ";
-        let tokens = tokenize(declare)
-            .into_iter()
-            .map(|t| t.kind)
-            .collect::<Vec<_>>();
+        let tokens = tokenize(declare);
 
         let declaration_ast = parse(&tokens).unwrap();
 
-
         let input = "let result:num = factorial(5);";
-        let tokens = tokenize(input)
-            .into_iter()
-            .map(|t| t.kind)
-            .collect::<Vec<_>>();
+        let tokens = tokenize(input);
         let expression = parse(&tokens).unwrap();
 
         let mut vm = VirtualMachine::new();
@@ -259,10 +252,7 @@ mod tests {
         let array2:[num] = [6, 7, 8, 9, 10];
         let array3:[num] = array + array2;";
 
-        let tokens = tokenize(declare)
-            .into_iter()
-            .map(|t| t.kind)
-            .collect::<Vec<_>>();
+        let tokens = tokenize(declare);
 
         let program = parse(&tokens).unwrap();
 
@@ -296,10 +286,7 @@ mod tests {
     fn test_string() {
         let declare = "let string:[char] = \"Hello\" + \", World!\";";
 
-        let tokens = tokenize(declare)
-            .into_iter()
-            .map(|t| t.kind)
-            .collect::<Vec<_>>();
+        let tokens = tokenize(declare);
 
         let program = parse(&tokens).unwrap();
 
@@ -338,10 +325,7 @@ mod tests {
     increment(x + 1, i - 1)
 };
 let incremented:num = increment(0, 20000);";
-        let tokens = tokenize(declare)
-            .into_iter()
-            .map(|t| t.kind)
-            .collect::<Vec<_>>();
+        let tokens = tokenize(declare);
 
         let program = parse(&tokens).unwrap();
 
@@ -361,10 +345,7 @@ let func:fn = (x:num):num=>x+1;
 func(1);
 ";
 
-        let tokens = tokenize(declare)
-            .into_iter()
-            .map(|t| t.kind)
-            .collect::<Vec<_>>();
+        let tokens = tokenize(declare);
 
         let program = parse(&tokens).unwrap();
 

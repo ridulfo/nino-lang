@@ -57,10 +57,7 @@ fn main() {
     chart.push_str("\n");
     chart.push_str("```mermaid\nflowchart TD\n");
 
-    let tokens = tokenize(code)
-        .into_iter()
-        .map(|t| t.kind)
-        .collect::<Vec<_>>();
+    let tokens = tokenize(code);
 
     let ast = match nino::parser::parse(&tokens) {
         Ok(ast) => ast,

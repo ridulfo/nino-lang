@@ -54,11 +54,17 @@ pub enum TokenKind {
     EOF,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
     pub begin: usize,
     pub end: usize,
+}
+
+impl Token {
+    pub fn new(kind: TokenKind, begin: usize, end: usize) -> Self {
+        Token { kind, begin, end }
+    }
 }
 
 fn parse_number(chars: &mut Peekable<CharIndices>) -> Token {
