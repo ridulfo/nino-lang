@@ -67,10 +67,13 @@ impl Token {
     }
 }
 
-fn parse_number(chars: &mut Peekable<CharIndices>) -> Token {
+fn parse_number(chars: &mut Peekable<CharIndices>, negative: bool) -> Token {
     let begin = chars.peek().unwrap().0;
     let mut end = begin;
     let mut string = String::new();
+    if negative {
+        string.push('-');
+    }
     while let Some((i, c)) = chars.peek() {
         match c {
             '0'..='9' | '.' => string.push(*c),
@@ -81,7 +84,7 @@ fn parse_number(chars: &mut Peekable<CharIndices>) -> Token {
     }
     Token {
         kind: TokenKind::Number(string.parse::<f64>().unwrap()),
-        begin,
+        begin: if negative { begin - 1 } else { begin },
         end,
     }
 }
@@ -146,7 +149,7 @@ fn parse_word(chars: &mut Peekable<CharIndices>) -> Token {
         if !s.is_alphanumeric() && s != '_' {
             break;
         }
-            end = i;
+        end = i;
         string.push(s);
         chars.next();
     }
@@ -160,11 +163,7 @@ fn parse_word(chars: &mut Peekable<CharIndices>) -> Token {
         _ => TokenKind::Identifier(string),
     };
 
-    Token {
-        kind,
-        begin,
-        end,
-    }
+    Token { kind, begin, end }
 }
 
 pub fn tokenize(input: &str) -> Vec<Token> {
@@ -181,7 +180,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 continue;
             }
             '0'..='9' => {
-                tokens.push(parse_number(&mut chars));
+                tokens.push(parse_number(&mut chars, false));
                 continue;
             }
             '"' => {
@@ -232,11 +231,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     }
                     _ => TokenKind::Assignment,
                 };
-                tokens.push(Token {
-                    kind,
-                    begin,
-                    end,
-                });
+                tokens.push(Token { kind, begin, end });
                 continue;
             }
             '<' => {
@@ -281,7 +276,16 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             ';' => TokenKind::Semicolon,
             '|' => TokenKind::Pipe,
             '+' => TokenKind::Addition,
-            '-' => TokenKind::Subtraction,
+            '-' => {
+                chars.next();
+                if let Some(&(_, c)) = chars.peek() {
+                    if c.is_numeric() {
+                        tokens.push(parse_number(&mut chars, true));
+                        continue;
+                    }
+                }
+                TokenKind::Subtraction
+            }
             '*' => TokenKind::Multiplication,
             '/' => TokenKind::Division,
             '?' => TokenKind::Question,
@@ -306,8 +310,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     }
     tokens.push(Token {
         kind: TokenKind::EOF,
-        begin: input.len()-1,
-        end: input.len()-1,
+        begin: input.len() - 1,
+        end: input.len() - 1,
     });
 
     tokens
@@ -333,20 +337,57 @@ mod tests {
     fn test_parse_number() {
         let input = "123 345";
         let mut chars = input.char_indices().peekable();
-        let token = parse_number(&mut chars);
-        assert_eq!(token, Token { kind: TokenKind::Number(123.0), begin: 0, end: 2 });
+        let token = parse_number(&mut chars, false);
+        assert_eq!(
+            token,
+            Token {
+                kind: TokenKind::Number(123.0),
+                begin: 0,
+                end: 2
+            }
+        );
         assert_eq!(chars.next(), Some((3, ' ')));
         consume_whitespace(&mut chars);
-        let token = parse_number(&mut chars);
-        assert_eq!(token, Token { kind: TokenKind::Number(345.0), begin: 4, end: 6 });
+        let token = parse_number(&mut chars, false);
+        assert_eq!(
+            token,
+            Token {
+                kind: TokenKind::Number(345.0),
+                begin: 4,
+                end: 6
+            }
+        );
+    }
+
+    #[test]
+    fn test_parse_negative_number() {
+        let input = "-123";
+        let mut chars = input.char_indices().peekable();
+        chars.next(); // Needed for correct index
+        let token = parse_number(&mut chars, true);
+        assert_eq!(
+            token,
+            Token {
+                kind: TokenKind::Number(-123.0),
+                begin: 0,
+                end: 3
+            }
+        );
     }
 
     #[test]
     fn test_parse_float() {
         let input = "123.456";
         let mut chars = input.char_indices().peekable();
-        let token = parse_number(&mut chars);
-        assert_eq!(token, Token { kind: TokenKind::Number(123.456), begin: 0, end: 6 });
+        let token = parse_number(&mut chars, false);
+        assert_eq!(
+            token,
+            Token {
+                kind: TokenKind::Number(123.456),
+                begin: 0,
+                end: 6
+            }
+        );
     }
 
     #[test]
@@ -362,7 +403,14 @@ mod tests {
     fn test_parse_string() {
         let input = "\"hello world\"";
         let token = parse_string(&mut input.char_indices().peekable());
-        assert_eq!(token, Token { kind: TokenKind::String("hello world".to_string()), begin: 0, end: 12 });
+        assert_eq!(
+            token,
+            Token {
+                kind: TokenKind::String("hello world".to_string()),
+                begin: 0,
+                end: 12
+            }
+        );
     }
 
     #[test]
@@ -372,49 +420,206 @@ mod tests {
 
         assert_eq!(tokens.len(), 8);
 
-        assert_eq!(tokens[0], Token { kind: TokenKind::Let, begin: 0, end: 2 });
+        assert_eq!(
+            tokens[0],
+            Token {
+                kind: TokenKind::Let,
+                begin: 0,
+                end: 2
+            }
+        );
 
-        assert_eq!(tokens[1], Token { kind: TokenKind::Identifier("x".to_string()), begin: 4, end: 4 });
-        
-        assert_eq!(tokens[2], Token { kind: TokenKind::Colon, begin: 5, end: 5 });
+        assert_eq!(
+            tokens[1],
+            Token {
+                kind: TokenKind::Identifier("x".to_string()),
+                begin: 4,
+                end: 4
+            }
+        );
 
-        assert_eq!(tokens[3], Token { kind: TokenKind::Type("num".to_string()), begin: 6, end: 8 });
+        assert_eq!(
+            tokens[2],
+            Token {
+                kind: TokenKind::Colon,
+                begin: 5,
+                end: 5
+            }
+        );
 
-        assert_eq!(tokens[4], Token { kind: TokenKind::Assignment, begin: 10, end: 10 });
+        assert_eq!(
+            tokens[3],
+            Token {
+                kind: TokenKind::Type("num".to_string()),
+                begin: 6,
+                end: 8
+            }
+        );
 
-        assert_eq!(tokens[5], Token { kind: TokenKind::Number(3.0), begin: 12, end: 12 });
+        assert_eq!(
+            tokens[4],
+            Token {
+                kind: TokenKind::Assignment,
+                begin: 10,
+                end: 10
+            }
+        );
 
-        assert_eq!(tokens[6], Token { kind: TokenKind::Semicolon, begin: 13, end: 13 });
+        assert_eq!(
+            tokens[5],
+            Token {
+                kind: TokenKind::Number(3.0),
+                begin: 12,
+                end: 12
+            }
+        );
 
-        assert_eq!(tokens[7], Token { kind: TokenKind::EOF, begin: 13, end: 13 });
+        assert_eq!(
+            tokens[6],
+            Token {
+                kind: TokenKind::Semicolon,
+                begin: 13,
+                end: 13
+            }
+        );
+
+        assert_eq!(
+            tokens[7],
+            Token {
+                kind: TokenKind::EOF,
+                begin: 13,
+                end: 13
+            }
+        );
     }
 
     #[test]
     fn test_parse_equalities() {
         let input = "1 == 2 != 3 > 4 < 5 >= 6 <= 7";
         let tokens = tokenize(input);
-        
+
         assert_eq!(tokens.len(), 14);
-        assert_eq!(tokens[0], Token { kind: TokenKind::Number(1.0), begin: 0, end: 0 });
-        assert_eq!(tokens[1], Token { kind: TokenKind::Equal, begin: 2, end: 3 });
-        assert_eq!(tokens[2], Token { kind: TokenKind::Number(2.0), begin: 5, end: 5 });
-        assert_eq!(tokens[3], Token { kind: TokenKind::NotEqual, begin: 7, end: 8 });
-        assert_eq!(tokens[4], Token { kind: TokenKind::Number(3.0), begin: 10, end: 10 });
-        assert_eq!(tokens[5], Token { kind: TokenKind::GreaterThan, begin: 12, end: 13 });
-        assert_eq!(tokens[6], Token { kind: TokenKind::Number(4.0), begin: 14, end: 14 });
-        assert_eq!(tokens[7], Token { kind: TokenKind::LessThan, begin: 16, end: 17 });
-        assert_eq!(tokens[8], Token { kind: TokenKind::Number(5.0), begin: 18, end: 18 });
-        assert_eq!(tokens[9], Token { kind: TokenKind::GreaterEqualThan, begin: 20, end: 22 });
-        assert_eq!(tokens[10], Token { kind: TokenKind::Number(6.0), begin: 23, end: 23 });
-        assert_eq!(tokens[11], Token { kind: TokenKind::LessEqualThan, begin: 25, end: 27 });
-        assert_eq!(tokens[12], Token { kind: TokenKind::Number(7.0), begin: 28, end: 28 });
-        assert_eq!(tokens[13], Token { kind: TokenKind::EOF, begin: 28, end: 28 });
+        assert_eq!(
+            tokens[0],
+            Token {
+                kind: TokenKind::Number(1.0),
+                begin: 0,
+                end: 0
+            }
+        );
+        assert_eq!(
+            tokens[1],
+            Token {
+                kind: TokenKind::Equal,
+                begin: 2,
+                end: 3
+            }
+        );
+        assert_eq!(
+            tokens[2],
+            Token {
+                kind: TokenKind::Number(2.0),
+                begin: 5,
+                end: 5
+            }
+        );
+        assert_eq!(
+            tokens[3],
+            Token {
+                kind: TokenKind::NotEqual,
+                begin: 7,
+                end: 8
+            }
+        );
+        assert_eq!(
+            tokens[4],
+            Token {
+                kind: TokenKind::Number(3.0),
+                begin: 10,
+                end: 10
+            }
+        );
+        assert_eq!(
+            tokens[5],
+            Token {
+                kind: TokenKind::GreaterThan,
+                begin: 12,
+                end: 13
+            }
+        );
+        assert_eq!(
+            tokens[6],
+            Token {
+                kind: TokenKind::Number(4.0),
+                begin: 14,
+                end: 14
+            }
+        );
+        assert_eq!(
+            tokens[7],
+            Token {
+                kind: TokenKind::LessThan,
+                begin: 16,
+                end: 17
+            }
+        );
+        assert_eq!(
+            tokens[8],
+            Token {
+                kind: TokenKind::Number(5.0),
+                begin: 18,
+                end: 18
+            }
+        );
+        assert_eq!(
+            tokens[9],
+            Token {
+                kind: TokenKind::GreaterEqualThan,
+                begin: 20,
+                end: 22
+            }
+        );
+        assert_eq!(
+            tokens[10],
+            Token {
+                kind: TokenKind::Number(6.0),
+                begin: 23,
+                end: 23
+            }
+        );
+        assert_eq!(
+            tokens[11],
+            Token {
+                kind: TokenKind::LessEqualThan,
+                begin: 25,
+                end: 27
+            }
+        );
+        assert_eq!(
+            tokens[12],
+            Token {
+                kind: TokenKind::Number(7.0),
+                begin: 28,
+                end: 28
+            }
+        );
+        assert_eq!(
+            tokens[13],
+            Token {
+                kind: TokenKind::EOF,
+                begin: 28,
+                end: 28
+            }
+        );
     }
 
     #[test]
     fn test_equality_expression() {
         let input = "let x:bool = 1+3>2 == 1;";
-        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         assert_eq!(
             tokens,
             vec![
@@ -439,7 +644,10 @@ mod tests {
     #[test]
     fn test_array() {
         let input = "let x:[num] = [1,2,3];";
-        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
         assert_eq!(
             tokens,
             vec![
@@ -466,7 +674,10 @@ mod tests {
         let input = "let x:num = 1; # This is a comment
 let y:num = 2; # This is another comment";
 
-        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
 
         compare_tokens(
             tokens,
@@ -497,7 +708,10 @@ let y:num = 2; # This is another comment";
     2 => 3,
     4
 };";
-        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
 
         assert_eq!(
             tokens,
@@ -529,7 +743,10 @@ let y:num = 2; # This is another comment";
     #[test]
     fn test_string() {
         let input = "let x:[char] = \"hello world\";";
-        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
 
         compare_tokens(
             tokens,
@@ -558,7 +775,10 @@ let y:num = 2; # This is another comment";
         true => is_prime_helper(x, 3, sqrt_x_int)
     };";
 
-        let tokens = tokenize(input).into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
 
         compare_tokens(
             tokens,
