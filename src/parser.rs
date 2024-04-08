@@ -103,6 +103,28 @@ pub enum Item {
     Expression(Expression),
 }
 
+fn parse_group(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, ParserError> {
+    let expression = match parse_expression(tokens) {
+        Ok(expression) => expression,
+        Err(error) => return Err(error),
+    };
+
+    match tokens.next().unwrap() {
+        Token {
+            kind: TokenKind::RightParen,
+            ..
+        } => {}
+        token => {
+            return Err(ParserError {
+                message: format!("Expected right parenthesis, got {:?}", token.kind),
+                token: Some(token.clone()),
+            })
+        }
+    }
+
+    Ok(expression)
+}
+
 fn parse_function_declaration(
     tokens: &mut Peekable<Iter<Token>>,
 ) -> Result<Expression, ParserError> {
@@ -302,11 +324,16 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, P
             kind: TokenKind::LeftParen,
             ..
         } => {
-            // Parsing (identifier:type, identifier:type) => expression
-            match parse_function_declaration(tokens) {
-                Ok(expression) => expression,
-                Err(error) => return Err(error),
-            }
+            // TODO: This is a hack, we should be able to parse a group without cloning the tokens
+
+            // Try parsing a group, if that fails, try parsing a function declaration
+            let mut experiment = tokens.clone();
+            let possible_group = parse_group(&mut experiment);
+
+            match possible_group {
+                Ok(_) => parse_group(tokens),
+                Err(_) => parse_function_declaration(tokens),
+            }?
         }
         Token {
             kind: TokenKind::Number(value),

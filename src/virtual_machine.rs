@@ -356,4 +356,34 @@ func(1);
         let result = *vm.symbols.get("x").unwrap().expression.clone();
         assert_eq!(result, Expression::Number(0.0));
     }
+
+    /// Testing operator precedence
+    #[test]
+    fn test_precedence() {
+        let declare = "let x:num = 1 + 2 * 3;";
+
+        let tokens = tokenize(declare);
+
+        let program = parse(&tokens).unwrap();
+
+        let mut vm = VirtualMachine::new();
+
+        vm.run(program);
+
+        let result = *vm.symbols.get("x").unwrap().expression.clone();
+        assert_eq!(result, Expression::Number(7.0));
+
+        let declare = "let x:num = (1 * 2) + 3;";
+
+        let tokens = tokenize(declare);
+
+        let program = parse(&tokens).unwrap();
+
+        let mut vm = VirtualMachine::new();
+
+        vm.run(program);
+
+        let result = *vm.symbols.get("x").unwrap().expression.clone();
+        assert_eq!(result, Expression::Number(5.0));
+    }
 }
