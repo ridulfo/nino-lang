@@ -174,7 +174,12 @@ fn parse_function_declaration(
                             })
                         }
                     },
-                    _ => panic!("Expected type"),
+                    token => {
+                        return Err(ParserError {
+                            message: format!("Expected type, got {:?}", token.kind),
+                            token: Some(token.clone()),
+                        })
+                    }
                 };
                 arguments.push(FunctionParameter { name, type_ });
             }
@@ -355,10 +360,12 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, P
             }
             Expression::Array(Type::Number, elements)
         }
-        _ => panic!(
-            "\nExpected identifier, number, char, boolean, string or left bracket, got {:?}",
-            tokens.peek().unwrap()
-        ),
+        token => {
+            return Err(ParserError {
+                message: format!("Unexpected token: {:?}", token.kind),
+                token: Some(token.clone()),
+            })
+        }
     };
 
     if let Some(token) = tokens.peek() {
@@ -545,7 +552,7 @@ pub fn parse_comparison(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression
         Err(error) => return Err(error),
     };
 
-    while let Some(token) = tokens.peek(){
+    while let Some(token) = tokens.peek() {
         match token {
             Token {
                 kind: TokenKind::LessThan,
@@ -612,7 +619,12 @@ pub fn parse_equality(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, 
                         kind: TokenKind::NotEqual,
                         ..
                     } => BinaryOperator::NotEqual,
-                    _ => panic!("Expected equal or not equal"),
+                    token => {
+                        return Err(ParserError {
+                            message: format!("Expected equal or not equal, got {:?}", token.kind),
+                            token: Some(token.clone()),
+                        })
+                    }
                 };
                 let right = match parse_comparison(tokens) {
                     Ok(expression) => expression,
