@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{iter::Peekable, slice::Iter};
 
 use crate::lexer::{Token, TokenKind};
@@ -1123,6 +1121,50 @@ mod tests {
         );
     }
 
+    /// Testing `(1+1) ? {1 => 2, 2 => 3, 4 };`
+    #[test]
+    fn test_match_group() {
+        let tokens = vec![
+            Token::new(TokenKind::LeftParen, 0, 0),
+            Token::new(TokenKind::Number(1.0), 1, 1),
+            Token::new(TokenKind::Addition, 2, 2),
+            Token::new(TokenKind::Number(1.0), 3, 3),
+            Token::new(TokenKind::RightParen, 4, 4),
+            Token::new(TokenKind::Question, 6, 6),
+            Token::new(TokenKind::LeftBrace, 8, 8),
+            Token::new(TokenKind::Number(1.0), 9, 9),
+            Token::new(TokenKind::Arrow, 11, 12),
+            Token::new(TokenKind::Number(2.0), 14, 14),
+            Token::new(TokenKind::Comma, 16, 16),
+            Token::new(TokenKind::Number(2.0), 18, 18),
+            Token::new(TokenKind::Arrow, 20, 21),
+            Token::new(TokenKind::Number(3.0), 23, 23),
+            Token::new(TokenKind::Comma, 25, 25),
+            Token::new(TokenKind::Number(4.0), 27, 27),
+            Token::new(TokenKind::RightBrace, 28, 28),
+            Token::new(TokenKind::Semicolon, 29, 29),
+            Token::new(TokenKind::EOF, 30, 30),
+        ];
+
+        let items = parse(&tokens).unwrap();
+
+        assert_eq!(
+            items[0],
+            Item::Expression(Expression::Match(Match {
+                value: Box::new(Expression::BinaryOperation(BinaryOperation {
+                    operator: BinaryOperator::Add,
+                    left: Box::new(Expression::Number(1.0)),
+                    right: Box::new(Expression::Number(1.0)),
+                })),
+                patterns: vec![
+                    (Expression::Number(1.0), Expression::Number(2.0),),
+                    (Expression::Number(2.0), Expression::Number(3.0),),
+                ],
+                default: Some(Box::new(Expression::Number(4.0))),
+            }))
+        );
+    }
+
     /// Testing `let x:[num] = [1, 2, 3];`
     #[test]
     fn test_array() {
@@ -1236,6 +1278,28 @@ mod tests {
                     right: Box::new(Expression::Number(1.0)),
                 })),
             })
+        );
+    }
+
+    #[test]
+    fn test_group(){
+        let tokens = vec![
+            Token::new(TokenKind::LeftParen, 0, 0),
+            Token::new(TokenKind::Number(1.0), 1, 1),
+            Token::new(TokenKind::Addition, 3, 3),
+            Token::new(TokenKind::Number(2.0), 5, 5),
+            Token::new(TokenKind::RightParen, 6, 6),
+            Token::new(TokenKind::EOF, 7, 7),
+        ];
+
+        let expression = parse_expression(&mut tokens.iter().peekable());
+        assert_eq!(
+            expression,
+            Ok(Expression::BinaryOperation(BinaryOperation {
+                operator: BinaryOperator::Add,
+                left: Box::new(Expression::Number(1.0)),
+                right: Box::new(Expression::Number(2.0)),
+            }))
         );
     }
 }
