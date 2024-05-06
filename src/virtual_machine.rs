@@ -147,7 +147,11 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                         return evaluate(case.1, &current_symbols);
                     }
                 }
-                current_expression = *match_.default.unwrap();
+                if match_.default.is_some() {
+                    current_expression = *match_.default.unwrap();
+                } else {
+                    panic!("No matching pattern found. You should add a default pattern.");
+                }
                 continue;
             }
             _ => panic!("Unknown expression {:?}", current_expression),
