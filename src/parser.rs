@@ -356,7 +356,8 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, P
         ),
         Token {
             kind: TokenKind::LeftBracket,
-            ..
+            begin,
+            end,
         } => {
             let mut elements = vec![];
             loop {
@@ -383,7 +384,29 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, P
                     }
                 }
             }
-            Expression::Array(Type::Number, elements)
+            // Get the type from the first element
+            let array_type = match elements.first() {
+                Some(Expression::Number(..)) => Type::Number,
+                Some(Expression::Char(..)) => Type::Char,
+                Some(Expression::Bool(..)) => Type::Boolean,
+                Some(Expression::Array(..)) => Type::Array(Box::new(Type::Function)),
+                Some(Expression::FunctionDeclaration(..)) => Type::Function,
+                Some(Expression::BinaryOperation(..)) => Type::Number,
+                Some(Expression::Identifier(..)) => Type::Number,
+                Some(Expression::FunctionCall(..)) => Type::Number,
+                Some(Expression::Match(..)) => Type::Number,
+                None => {
+                    return Err(ParserError {
+                        message: "Empty array, cannot infer array type".to_string(),
+                        token: Some(Token {
+                            kind: TokenKind::LeftBracket,
+                            begin: *begin,
+                            end: *end,
+                        }),
+                    })
+                }
+            };
+            Expression::Array(array_type, elements)
         }
         token => {
             return Err(ParserError {
