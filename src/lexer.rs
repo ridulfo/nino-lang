@@ -121,6 +121,18 @@ fn parse_string(chars: &mut Peekable<CharIndices>) -> Token {
     }
 }
 
+fn parse_char(chars: &mut Peekable<CharIndices>) -> Token {
+    let begin = chars.peek().unwrap().0;
+    assert_eq!(chars.next().unwrap().1, '\'');
+    let c = chars.next().unwrap().1;
+    let end = chars.next().unwrap().0;
+    Token {
+        kind: TokenKind::Character(c as u8),
+        begin,
+        end,
+    }
+}
+
 /// Parses a type, which is a string of characters that are alphanumeric
 fn parse_type(chars: &mut Peekable<CharIndices>) -> Token {
     let begin = chars.peek().unwrap().0;
@@ -185,6 +197,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             }
             '"' => {
                 tokens.push(parse_string(&mut chars));
+                continue;
+            }
+            '\'' => {
+                tokens.push(parse_char(&mut chars));
                 continue;
             }
             ':' => {
@@ -757,6 +773,29 @@ let y:num = 2; # This is another comment";
                 TokenKind::Type("[char]".to_string()),
                 TokenKind::Assignment,
                 TokenKind::String("hello world".to_string()),
+                TokenKind::Semicolon,
+                TokenKind::EOF,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_char() {
+        let input = "let x:char = 'a';";
+        let tokens = tokenize(input)
+            .into_iter()
+            .map(|t| t.kind)
+            .collect::<Vec<_>>();
+
+        compare_tokens(
+            tokens,
+            vec![
+                TokenKind::Let,
+                TokenKind::Identifier("x".to_string()),
+                TokenKind::Colon,
+                TokenKind::Type("char".to_string()),
+                TokenKind::Assignment,
+                TokenKind::Character('a' as u8),
                 TokenKind::Semicolon,
                 TokenKind::EOF,
             ],
