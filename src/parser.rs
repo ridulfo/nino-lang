@@ -827,8 +827,10 @@ mod tests {
             Token::new(TokenKind::Number(1.0), 0, 0),
             Token::new(TokenKind::Equal, 2, 3),
             Token::new(TokenKind::Number(1.0), 5, 5),
+            Token::new(TokenKind::EOF, 6, 6),
         ];
-        let expression = parse_equality(&mut tokens.iter().peekable());
+        let mut iter = tokens.iter().peekable();
+        let expression = parse_equality(&mut iter);
         assert_eq!(
             expression,
             Ok(Expression::BinaryOperation(BinaryOperation {
@@ -837,6 +839,7 @@ mod tests {
                 right: Box::new(Expression::Number(1.0)),
             }))
         );
+        assert_eq!(*iter.next().unwrap(), Token::new(TokenKind::EOF, 6, 6));
     }
 
     /// Testing `print(1);`
@@ -848,14 +851,20 @@ mod tests {
             Token::new(TokenKind::Number(1.0), 6, 6),
             Token::new(TokenKind::RightParen, 7, 7),
             Token::new(TokenKind::Semicolon, 8, 8),
+            Token::new(TokenKind::EOF, 9, 9),
         ];
-        let expression = parse_expression(&mut tokens.iter().peekable());
+        let mut iter = tokens.iter().peekable();
+        let expression = parse_expression(&mut iter);
         assert_eq!(
             expression,
             Ok(Expression::FunctionCall(FunctionCall {
                 name: "print".to_string(),
                 arguments: vec![Expression::Number(1.0)],
             }))
+        );
+        assert_eq!(
+            *iter.next().unwrap(),
+            Token::new(TokenKind::Semicolon, 8, 8)
         );
     }
 
@@ -905,6 +914,7 @@ mod tests {
         );
     }
 
+    /// Testing `(1 + 2)`
     #[test]
     fn test_group(){
         let tokens = vec![
@@ -916,7 +926,9 @@ mod tests {
             Token::new(TokenKind::EOF, 7, 7),
         ];
 
-        let expression = parse_expression(&mut tokens.iter().peekable());
+        let mut iter = tokens.iter().peekable();
+
+        let expression = parse_expression(&mut iter);
         assert_eq!(
             expression,
             Ok(Expression::BinaryOperation(BinaryOperation {
@@ -925,5 +937,6 @@ mod tests {
                 right: Box::new(Expression::Number(2.0)),
             }))
         );
+        assert_eq!(*iter.next().unwrap(), Token::new(TokenKind::EOF, 7, 7));
     }
 }
