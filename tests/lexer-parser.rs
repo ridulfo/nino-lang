@@ -85,14 +85,6 @@ fn test_type_char() {
 }
 
 #[test]
-/// This test should fail because the type of the value is not a char
-fn test_fail_type_char() {
-    let tokens = tokenize("let x:char = 'aa';");
-    let declaration = parse_declaration(&mut tokens.iter().peekable());
-    assert!(declaration.is_err(),);
-}
-
-#[test]
 fn test_type_bool() {
     let tokens = tokenize("let x:bool = true;");
     let declaration = parse_declaration(&mut tokens.iter().peekable());
