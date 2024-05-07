@@ -300,7 +300,12 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                         continue;
                     }
                 }
-                TokenKind::Subtraction
+                tokens.push(Token {
+                    kind: TokenKind::Subtraction,
+                    begin,
+                    end: begin,
+                });
+                continue;
             }
             '*' => TokenKind::Multiplication,
             '/' => TokenKind::Division,
@@ -388,6 +393,25 @@ mod tests {
                 begin: 0,
                 end: 3
             }
+        );
+    }
+
+    #[test]
+    fn test_parse_identifier_subtraction() {
+        let input = "-x";
+        let tokens = tokenize(input);
+        assert_eq!(tokens.len(), 3);
+        assert_eq!(
+            tokens[0],
+            Token::new(TokenKind::Subtraction, 0, 0)
+        );
+        assert_eq!(
+            tokens[1],
+            Token::new(TokenKind::Identifier("x".to_string()), 1, 1)
+        );
+        assert_eq!(
+            tokens[2],
+            Token::new(TokenKind::EOF, 1, 1)
         );
     }
 
