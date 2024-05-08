@@ -254,22 +254,7 @@ fn test_precedence() {
 /// Testing factorial example
 #[test]
 fn test_factorial() {
-    let code = "let factorial_helper:fn = (n:num, acc:num):num => n ? {
-	0 => acc,
-	factorial_helper(n - 1, n*acc)
-};
-
-let factorial:fn = (n:num):num => n ? {
-        0 => 1,
-	factorial_helper(n - 1, n)
-};
-
-
-let result1:num = factorial(0);
-let result2:num = factorial(1);
-let result3:num = factorial(5);
-";
-
+    let code = include_str!("programs/factorial.ni");
     let tokens = tokenize(code);
     let ast = parse(&tokens).unwrap();
 
@@ -277,13 +262,49 @@ let result3:num = factorial(5);
 
     vm.run(ast);
 
-
     let result = *vm.symbols.get("result1").unwrap().expression.clone();
     assert_eq!(result, Expression::Number(1.0));
-
     let result = *vm.symbols.get("result2").unwrap().expression.clone();
     assert_eq!(result, Expression::Number(1.0));
-
     let result = *vm.symbols.get("result3").unwrap().expression.clone();
     assert_eq!(result, Expression::Number(120.0));
+}
+
+#[test]
+fn test_is_prime() {
+    let code = include_str!("programs/is-prime.ni");
+
+    let tokens = tokenize(code);
+    let ast = parse(&tokens).unwrap();
+    let mut vm = VirtualMachine::new();
+    vm.run(ast);
+
+    let result = *vm.symbols.get("is_prime_23").unwrap().expression.clone();
+    assert_eq!(result, Expression::Bool(true));
+    let result = *vm.symbols.get("is_prime_100").unwrap().expression.clone();
+    assert_eq!(result, Expression::Bool(false));
+    let result = *vm
+        .symbols
+        .get("is_prime_10000189")
+        .unwrap()
+        .expression
+        .clone();
+    assert_eq!(result, Expression::Bool(true));
+}
+
+#[test]
+fn test_fibonacci() {
+    let code = include_str!("programs/fibonacci.ni");
+
+    let tokens = tokenize(code);
+    let ast = parse(&tokens).unwrap();
+    let mut vm = VirtualMachine::new();
+    vm.run(ast);
+
+    let result = *vm.symbols.get("simple").unwrap().expression.clone();
+    assert_eq!(result, Expression::Number(21.0));
+    let result = *vm.symbols.get("correct").unwrap().expression.clone();
+    assert_eq!(result, Expression::Number(21.0));
+    let result = *vm.symbols.get("tail").unwrap().expression.clone();
+    assert_eq!(result, Expression::Number(21.0));
 }
