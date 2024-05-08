@@ -95,6 +95,8 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                         _ => panic!("Invalid function"),
                     };
 
+                    // First the arguments need to be evaluated
+                    let mut temp = vec![];
                     for (i, argument) in function_call.arguments.iter().enumerate() {
                         let name = function.parameters[i].name.clone();
                         let type_ = function.parameters[i].type_.clone();
@@ -104,8 +106,14 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                             type_: type_.clone(),
                             expression: Box::new(expression),
                         };
-                        current_symbols.insert(name.clone(), declaration);
+                        temp.push(declaration);
                     }
+                    // Then the arguments can be inserted into the current symbols
+                    for (i, argument) in temp.iter().enumerate() {
+                        current_symbols
+                            .insert(function.parameters[i].name.clone(), argument.clone());
+                    }
+
                     current_expression = *function.expression;
                     continue;
                 }
@@ -198,10 +206,7 @@ impl<'a> VirtualMachine<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        lexer::tokenize,
-        parser::{parse, BinaryOperation, Type},
-    };
+    use crate::parser::BinaryOperation;
 
     use super::*;
 
@@ -220,5 +225,4 @@ mod tests {
 
         assert_eq!(result, Expression::Number(3.0));
     }
-
 }
