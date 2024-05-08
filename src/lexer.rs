@@ -292,21 +292,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             ';' => TokenKind::Semicolon,
             '|' => TokenKind::Pipe,
             '+' => TokenKind::Addition,
-            '-' => {
-                chars.next();
-                if let Some(&(_, c)) = chars.peek() {
-                    if c.is_numeric() {
-                        tokens.push(parse_number(&mut chars, true));
-                        continue;
-                    }
-                }
-                tokens.push(Token {
-                    kind: TokenKind::Subtraction,
-                    begin,
-                    end: begin,
-                });
-                continue;
-            }
+            '-' => TokenKind::Subtraction,
             '*' => TokenKind::Multiplication,
             '/' => TokenKind::Division,
             '?' => TokenKind::Question,
@@ -385,15 +371,10 @@ mod tests {
         let input = "-123";
         let mut chars = input.char_indices().peekable();
         chars.next(); // Needed for correct index
-        let token = parse_number(&mut chars, true);
-        assert_eq!(
-            token,
-            Token {
-                kind: TokenKind::Number(-123.0),
-                begin: 0,
-                end: 3
-            }
-        );
+        let token = tokenize(&input);
+        assert_eq!(token.len(), 3);
+        assert_eq!(token[0], Token::new(TokenKind::Subtraction, 0, 0),);
+        assert_eq!(token[1], Token::new(TokenKind::Number(123.0), 1, 3),);
     }
 
     #[test]
@@ -401,18 +382,12 @@ mod tests {
         let input = "-x";
         let tokens = tokenize(input);
         assert_eq!(tokens.len(), 3);
-        assert_eq!(
-            tokens[0],
-            Token::new(TokenKind::Subtraction, 0, 0)
-        );
+        assert_eq!(tokens[0], Token::new(TokenKind::Subtraction, 0, 0));
         assert_eq!(
             tokens[1],
             Token::new(TokenKind::Identifier("x".to_string()), 1, 1)
         );
-        assert_eq!(
-            tokens[2],
-            Token::new(TokenKind::EOF, 1, 1)
-        );
+        assert_eq!(tokens[2], Token::new(TokenKind::EOF, 1, 1));
     }
 
     #[test]

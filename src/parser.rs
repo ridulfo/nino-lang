@@ -340,6 +340,24 @@ pub fn parse_primary(tokens: &mut Peekable<Iter<Token>>) -> Result<Expression, P
             ..
         } => Expression::Number(*value),
         Token {
+            kind: TokenKind::Subtraction,
+            ..
+        } => {
+            let value = match tokens.next().unwrap() {
+                Token {
+                    kind: TokenKind::Number(value),
+                    ..
+                } => *value,
+                token => {
+                    return Err(ParserError {
+                        message: format!("Expected number, got {:?}", token.kind),
+                        token: Some(token.clone()),
+                    })
+                }
+            };
+            Expression::Number(-value)
+        }
+        Token {
             kind: TokenKind::Character(value),
             ..
         } => Expression::Char(*value),

@@ -9,7 +9,7 @@ use nino::{
 fn test_recursion() {
     let code = "let factorial:fn = (n:num):num => n ? {
     0 => 1,
-    n * factorial(n - 1)
+    n * factorial(n-1)
 };
 let result:num = factorial(5);";
     let tokens = tokenize(code);
@@ -186,7 +186,7 @@ let equality:bool = string1 == string2;";
 fn tail_optimization() {
     let declare = "let increment:fn = (x:num, i:num):num => i ? {
     0 => x,
-    increment(x + 1, i - 1)
+    increment(x+1, i-1)
 };
 let incremented:num = increment(0, 20000);";
     let tokens = tokenize(declare);

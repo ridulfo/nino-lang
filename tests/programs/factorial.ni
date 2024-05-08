@@ -1,11 +1,11 @@
 let factorial_helper:fn = (n:num, acc:num):num => n ? {
 	0 => acc,
-	factorial_helper(n - 1, n*acc)
+	factorial_helper(n-1, n*acc)
 };
 
 let factorial:fn = (n:num):num => n ? {
         0 => 1,
-	factorial_helper(n - 1, n)
+	factorial_helper(n-1, n)
 };
 
 
