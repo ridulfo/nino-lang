@@ -88,7 +88,7 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                     // Get the function declaration
                     let declaration = current_symbols.get(&function_call.name).unwrap();
                     // The expression which we know to be a function declaration
-                    let function_declaration_expression = (*declaration.expression).clone();
+                    let function_declaration_expression = *declaration.expression;
 
                     let function = match function_declaration_expression {
                         Expression::FunctionDeclaration(function) => function,
@@ -98,8 +98,8 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                     // First the arguments need to be evaluated
                     let mut temp = vec![];
                     for (i, argument) in function_call.arguments.iter().enumerate() {
-                        let name = function.parameters[i].name.clone();
-                        let type_ = function.parameters[i].type_.clone();
+                        let name = &function.parameters[i].name;
+                        let type_ = &function.parameters[i].type_;
                         let expression = evaluate(argument.clone(), &current_symbols);
                         let declaration = Declaration {
                             name: name.clone(),
