@@ -250,3 +250,40 @@ fn test_precedence() {
     let result = *vm.symbols.get("x").unwrap().expression.clone();
     assert_eq!(result, Expression::Number(5.0));
 }
+
+/// Testing factorial example
+#[test]
+fn test_factorial() {
+    let code = "let factorial_helper:fn = (n:num, acc:num):num => n ? {
+	0 => acc,
+	factorial_helper(n - 1, n*acc)
+};
+
+let factorial:fn = (n:num):num => n ? {
+        0 => 1,
+	factorial_helper(n - 1, n)
+};
+
+
+let result1:num = factorial(0);
+let result2:num = factorial(1);
+let result3:num = factorial(5);
+";
+
+    let tokens = tokenize(code);
+    let ast = parse(&tokens).unwrap();
+
+    let mut vm = VirtualMachine::new();
+
+    vm.run(ast);
+
+
+    let result = *vm.symbols.get("result1").unwrap().expression.clone();
+    assert_eq!(result, Expression::Number(1.0));
+
+    let result = *vm.symbols.get("result2").unwrap().expression.clone();
+    assert_eq!(result, Expression::Number(1.0));
+
+    let result = *vm.symbols.get("result3").unwrap().expression.clone();
+    assert_eq!(result, Expression::Number(120.0));
+}
