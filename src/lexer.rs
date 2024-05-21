@@ -184,6 +184,9 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 
     while chars.peek().is_some() {
         consume_whitespace(&mut chars); // Needed because early continue skips the bottom consume_whitespace
+        if chars.peek().is_none() {
+            break;
+        }
         let &(begin, c) = chars.peek().unwrap();
 
         let token = match c {
