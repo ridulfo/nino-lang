@@ -29,8 +29,15 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
 
     loop {
         return match current_expression {
-            Expression::Number(..) | Expression::Bool(..) | Expression::Array(..) => {
+            Expression::Number(..) | Expression::Bool(..) | Expression::Char(..) => {
                 current_expression
+            }
+            Expression::Array(type_, elements) => {
+                let mut result = vec![];
+                for element in elements {
+                    result.push(evaluate(element, &current_symbols));
+                }
+                Expression::Array(type_, result)
             }
             Expression::Identifier(identifier) => {
                 let declaration = current_symbols.get(&identifier).unwrap();
