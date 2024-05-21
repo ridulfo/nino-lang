@@ -9,9 +9,18 @@ pub fn print(expression: Expression, end: &str) -> Expression {
         Expression::Bool(val) => print!("{}{}", val, end),
         Expression::Array(type_, val) => {
             let is_string = type_ == &crate::parser::Type::Char;
-            if !is_string {
+
+            if is_string {
+                let collect: String = val
+                    .iter()
+                    .map(|x| match x {
+                        Expression::Char(val) => *val as char,
+                        _ => panic!("Cannot convert {:?} to string", x),
+                    })
+                    .collect();
+                print!("{}", collect);
+            } else {
                 print!("[");
-            }
             for (i, item) in val.iter().enumerate() {
                 if i != 0 && !is_string {
                     print!(", ");
