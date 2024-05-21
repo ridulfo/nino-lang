@@ -1,10 +1,11 @@
 mod builtins;
 
 use std::mem::discriminant;
+
 use crate::parser::{BinaryOperator, Declaration, Expression, Item};
 use crate::scoped_symbols::ScopedSymbols;
 
-use self::builtins::{time, print};
+use self::builtins::{debug_print, head, last, len, print, tail, time};
 
 fn binary_float_float(left_val: f64, right_val: f64, operator: BinaryOperator) -> Expression {
     match operator {
@@ -62,6 +63,22 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                         _ => panic!("Invalid type"),
                     }
                 }
+                "head" => {
+                    let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
+                    head(&expression).clone()
+                }
+                "last" => {
+                    let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
+                    last(&expression).clone()
+                }
+                "tail" => {
+                    let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
+                    tail(&expression)
+                }
+                "len" => {
+                    let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
+                    len(&expression)
+                }
                 _ => {
                     // Get the function declaration
                     let declaration = current_symbols.get(&function_call.name).unwrap();
@@ -111,7 +128,7 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                     ) => match operator {
                         BinaryOperator::Equal => Expression::Bool(left_val == right_val),
                         BinaryOperator::Add => {
-                            assert_eq!(left_type, right_type, "Invalid types");
+                            assert_eq!(left_type, right_type);
                             let mut result = left_val.clone();
                             result.extend(right_val);
                             Expression::Array(left_type, result)
@@ -184,7 +201,8 @@ impl<'a> VirtualMachine<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::BinaryOperation;
+    use crate::parser::{BinaryOperation, Type};
+
 
     use super::*;
 
@@ -201,6 +219,73 @@ mod tests {
         let mut vm = VirtualMachine::new();
         let result = vm.evaluate(expression);
 
+        assert_eq!(result, Expression::Number(3.0));
+    }
+
+    #[test]
+    fn test_first() {
+        let array = Expression::Array(
+            Type::Number,
+            vec![Expression::Number(1.0), Expression::Number(2.0)],
+        );
+
+        let result = {
+            let expression = &array;
+            let array = match expression {
+                Expression::Array(.., array) => array,
+                _ => panic!("Cannot take first of {:?}", expression),
+            };
+            match array.first() {
+                Some(expression) => expression,
+                None => &Expression::Bool(false),
+            }
+        };
+        assert_eq!(result, &Expression::Number(1.0));
+    }
+    #[test]
+    fn test_last() {
+        let array = Expression::Array(
+            Type::Number,
+            vec![Expression::Number(1.0), Expression::Number(2.0)],
+        );
+
+        let result = last(&array);
+        assert_eq!(result, &Expression::Number(2.0));
+    }
+
+    #[test]
+    fn test_tail() {
+        let array = Expression::Array(
+            Type::Number,
+            vec![
+                Expression::Number(1.0),
+                Expression::Number(2.0),
+                Expression::Number(3.0),
+            ],
+        );
+
+        let result = tail(&array);
+        assert_eq!(
+            result,
+            Expression::Array(
+                Type::Number,
+                vec![Expression::Number(2.0), Expression::Number(3.0)]
+            )
+        );
+    }
+
+    #[test]
+    fn test_len() {
+        let array = Expression::Array(
+            Type::Number,
+            vec![
+                Expression::Number(1.0),
+                Expression::Number(2.0),
+                Expression::Number(3.0),
+            ],
+        );
+
+        let result = len(&array);
         assert_eq!(result, Expression::Number(3.0));
     }
 }
