@@ -28,6 +28,11 @@ pub fn print(expression: Expression, end: &str) -> Expression {
     return expression;
 }
 
+pub fn debug_print(expression: Expression) -> Expression {
+    println!("{:#?}", expression);
+    return expression;
+}
+
 pub fn time() -> Expression {
     let start = SystemTime::now();
     let since_the_epoch = start

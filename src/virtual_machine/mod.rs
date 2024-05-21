@@ -43,6 +43,10 @@ fn evaluate(expression: Expression, symbols: &ScopedSymbols) -> Expression {
                     evaluate(function_call.arguments[0].clone(), &current_symbols),
                     "\n",
                 ),
+                "debug_print" => debug_print(evaluate(
+                    function_call.arguments[0].clone(),
+                    &current_symbols,
+                )),
                 "time" => time(),
                 "sqrt" => {
                     let expression = evaluate(function_call.arguments[0].clone(), &current_symbols);
