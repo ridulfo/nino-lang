@@ -1,5 +1,3 @@
-# This program currently does not compile due to a bug in the parser
-
 let polarity:fn = (x:num):num => true ? {
 	n mod 2 == 0 => 1,
 	-1
