@@ -23,9 +23,9 @@ In this spirit, the under the hood type system is minimal. There are only 5 type
 
 The language is chill with side effects. There is no need to wrap anything in monads.
 
-At the moment the language is interpreted, but the goal is to create a self-hosting compiler. TBD whether to compile directly to assembly, [LLVM IR](https://en.wikipedia.org/wiki/LLVM#Intermediate_representation) or [QBE IL](https://c9x.me/compile/).
+At the moment the language is interpreted, but the goal is to create a self-hosting compiler. TBD whether to compile directly to assembly, [LLVM IR](https://en.wikipedia.org/wiki/LLVM#Intermediate_representation) or [QBE IL](https://c9x.me/compile/). There is no garbage collector at the moment (TBD 🤨).
 
-There is no garbage collector (TBD 🤨).
+Finally, here is a blog-post about some design decisions: [Designing a functional programming language](https://nicolo.se/blog/2023-11-13-designing-a-programming-language/).
 
 ## Quick start
 
@@ -35,7 +35,7 @@ There is no garbage collector (TBD 🤨).
 cargo build --release && mv target/release/ninoi .
 ```
 
-**Run the example program**
+**Run a example program**
 
 ```bash
 ./ninoi examples/is-prime.ni
@@ -57,6 +57,8 @@ Time in milliseconds:
 47
     </pre>
 </details>
+
+More examples can be found in [/examples](/examples)!
 
 ### Bonus
 
